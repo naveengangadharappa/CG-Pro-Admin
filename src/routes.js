@@ -30,12 +30,12 @@ const Employee = React.lazy(() => import('./Layout/User/Employee'));
 const Levels = React.lazy(() => import('./Layout/Master/Levels'));
 const SubLevels = React.lazy(() => import('./Layout/Master/SubLevel'));
 const Questions = React.lazy(() => import('./Layout/Master/Question'));
-const Options = React.lazy(() => import('./Layout/Master/Options'));
 const Hint = React.lazy(() => import('./Layout/Master/Hint'));
+const Pattern = React.lazy(() => import('./Layout/Master/Pattern'));
 
 const routes = [
+    { path: '/Pattern', exact: true, name: 'Bootstrap Table', component: Pattern },
     { path: '/Hint', exact: true, name: 'Bootstrap Table', component: Hint },
-    { path: '/Options', exact: true, name: 'Bootstrap Table', component: Options },
     { path: '/Questions', exact: true, name: 'Bootstrap Table', component: Questions },
     { path: '/SubLevels', exact: true, name: 'Bootstrap Table', component: SubLevels },
     { path: '/Levels', exact: true, name: 'Bootstrap Table', component: Levels },

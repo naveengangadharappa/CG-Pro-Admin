@@ -37,213 +37,209 @@ export default {
             icon: 'icon-ui',
             children: [
                 {
-                    id: 'basic',
+                    id: 'Levels',
                     title: 'Levels Details',
                     type: 'collapse',
                     icon: 'feather icon-box',
                     children: [
                         {
-                            id: 'tabs-pills',
+                            id: 'Levels',
                             title: 'Levels',
                             type: 'item',
                             url: '/Levels'
                         },
                         {
-                            id: 'button',
+                            id: 'SubLevel',
                             title: 'SubLevel',
                             type: 'item',
                             url: '/SubLevels'
                         },
                         {
-                            id: 'badges',
+                            id: 'pattern',
+                            title: 'Pattern',
+                            type: 'item',
+                            url: '/Pattern'
+                        }
+                    ]
+                }, {
+                    id: 'Question',
+                    title: 'Question Details',
+                    type: 'collapse',
+                    icon: 'feather icon-box',
+                    children: [
+                        {
+                            id: 'Questions',
                             title: 'Questions',
                             type: 'item',
                             url: '/Questions'
-                        }/*{
-                            id: 'breadcrumb-pagination',
-                            title: 'Options',
-                            type: 'item',
-                            url: '/Options'
-                        },
-                        {
-                            id: 'collapse',
-                            title: 'Hint',
-                            type: 'item',
-                            url: '/Hint'
-                        },
-                        {
-                            id: 'typography',
-                            title: 'Patterns',
-                            type: 'item',
-                            url: '/typography'
-                        }*/
+                        }
                     ]
                 }
             ]
         },
-        {
-            id: 'ui-forms',
-            title: 'Masters section',
-            type: 'group',
-            icon: 'icon-group',
-            children: [
-                {
-                    id: 'form-basic',
-                    title: 'Menu 1',
-                    type: 'item',
-                    url: '/forms',
-                    icon: 'feather icon-file-text'
-                },
-                {
-                    id: 'bootstrap',
-                    title: 'Menu 2',
-                    type: 'item',
-                    icon: 'feather icon-server',
-                    url: '/tables'
-                }
-            ]
-        },
         /* {
-             id: 'chart-maps',
-             title: 'Chart & Maps',
+             id: 'ui-forms',
+             title: 'Demp',
              type: 'group',
-             icon: 'icon-charts',
+             icon: 'icon-group',
              children: [
                  {
-                     id: 'charts',
-                     title: 'Charts',
+                     id: 'form-basic',
+                     title: 'Menu 1',
                      type: 'item',
-                     icon: 'feather icon-pie-chart',
-                     url: '/charts/nvd3'
+                     url: '/forms',
+                     icon: 'feather icon-file-text'
                  },
                  {
-                     id: 'maps',
-                     title: 'Map',
+                     id: 'bootstrap',
+                     title: 'Menu 2',
                      type: 'item',
-                     icon: 'feather icon-map',
-                     url: '/maps/google-map'
+                     icon: 'feather icon-server',
+                     url: '/tables'
                  }
              ]
          },
-         {
-             id: 'pages',
-             title: 'Pages',
-             type: 'group',
-             icon: 'icon-pages',
-             children: [
-                 {
-                     id: 'auth',
-                     title: 'Authentication',
-                     type: 'collapse',
-                     icon: 'feather icon-lock',
-                     badge: {
-                         title: 'New',
-                         type: 'label-danger'
-                     },
-                     children: [
-                         {
-                             id: 'signup-1',
-                             title: 'Sign up',
-                             type: 'item',
-                             url: '/auth/signup-1',
-                             target: true,
-                             breadcrumbs: false
-                         },
-                         {
-                             id: 'signin-1',
-                             title: 'Sign in',
-                             type: 'item',
-                             url: '/auth/signin-1',
-                             target: true,
-                             breadcrumbs: false
-                         }
-                     ]
-                 },
- 
-                 {
-                     id: 'sample-page',
-                     title: 'Sample Page',
-                     type: 'item',
-                     url: '/sample-page',
-                     classes: 'nav-item',
-                     icon: 'feather icon-sidebar'
-                 },
-                 {
-                     id: 'docs',
-                     title: 'Documentation',
-                     type: 'item',
-                     url: '/docs',
-                     classes: 'nav-item',
-                     icon: 'feather icon-help-circle'
-                 },
-                 {
-                     id: 'menu-level',
-                     title: 'Menu Levels',
-                     type: 'collapse',
-                     icon: 'feather icon-menu',
-                     children: [
-                         {
-                             id: 'menu-level-1.1',
-                             title: 'Menu Level 1.1',
-                             type: 'item',
-                             url: '#!',
-                         },
-                         {
-                             id: 'menu-level-1.2',
-                             title: 'Menu Level 2.2',
-                             type: 'collapse',
-                             children: [
-                                 {
-                                     id: 'menu-level-2.1',
-                                     title: 'Menu Level 2.1',
-                                     type: 'item',
-                                     url: '#',
-                                 },
-                                 {
-                                     id: 'menu-level-2.2',
-                                     title: 'Menu Level 2.2',
-                                     type: 'collapse',
-                                     children: [
-                                         {
-                                             id: 'menu-level-3.1',
-                                             title: 'Menu Level 3.1',
-                                             type: 'item',
-                                             url: '#',
-                                         },
-                                         {
-                                             id: 'menu-level-3.2',
-                                             title: 'Menu Level 3.2',
-                                             type: 'item',
-                                             url: '#',
-                                         }
-                                     ]
-                                 }
-                             ]
-                         }
-                     ]
-                 },
-                 {
-                     id: 'disabled-menu',
-                     title: 'Disabled Menu',
-                     type: 'item',
-                     url: '#',
-                     classes: 'nav-item disabled',
-                     icon: 'feather icon-power'
-                 },
-                 /*{
-                     id: 'buy-now',
-                     title: 'Buy Now',
-                     type: 'item',
-                     icon: 'feather icon-user',
-                     classes: 'nav-item',
-                     url: 'https://codedthemes.com',
-                     target: true,
-                     external: true,
-                     badge: {
-                         title: 'v1.0',
-                         type: 'label-primary'
-                     }
-                 }*/
+         /* {
+              id: 'chart-maps',
+              title: 'Chart & Maps',
+              type: 'group',
+              icon: 'icon-charts',
+              children: [
+                  {
+                      id: 'charts',
+                      title: 'Charts',
+                      type: 'item',
+                      icon: 'feather icon-pie-chart',
+                      url: '/charts/nvd3'
+                  },
+                  {
+                      id: 'maps',
+                      title: 'Map',
+                      type: 'item',
+                      icon: 'feather icon-map',
+                      url: '/maps/google-map'
+                  }
+              ]
+          },
+          {
+              id: 'pages',
+              title: 'Pages',
+              type: 'group',
+              icon: 'icon-pages',
+              children: [
+                  {
+                      id: 'auth',
+                      title: 'Authentication',
+                      type: 'collapse',
+                      icon: 'feather icon-lock',
+                      badge: {
+                          title: 'New',
+                          type: 'label-danger'
+                      },
+                      children: [
+                          {
+                              id: 'signup-1',
+                              title: 'Sign up',
+                              type: 'item',
+                              url: '/auth/signup-1',
+                              target: true,
+                              breadcrumbs: false
+                          },
+                          {
+                              id: 'signin-1',
+                              title: 'Sign in',
+                              type: 'item',
+                              url: '/auth/signin-1',
+                              target: true,
+                              breadcrumbs: false
+                          }
+                      ]
+                  },
+  
+                  {
+                      id: 'sample-page',
+                      title: 'Sample Page',
+                      type: 'item',
+                      url: '/sample-page',
+                      classes: 'nav-item',
+                      icon: 'feather icon-sidebar'
+                  },
+                  {
+                      id: 'docs',
+                      title: 'Documentation',
+                      type: 'item',
+                      url: '/docs',
+                      classes: 'nav-item',
+                      icon: 'feather icon-help-circle'
+                  },
+                  {
+                      id: 'menu-level',
+                      title: 'Menu Levels',
+                      type: 'collapse',
+                      icon: 'feather icon-menu',
+                      children: [
+                          {
+                              id: 'menu-level-1.1',
+                              title: 'Menu Level 1.1',
+                              type: 'item',
+                              url: '#!',
+                          },
+                          {
+                              id: 'menu-level-1.2',
+                              title: 'Menu Level 2.2',
+                              type: 'collapse',
+                              children: [
+                                  {
+                                      id: 'menu-level-2.1',
+                                      title: 'Menu Level 2.1',
+                                      type: 'item',
+                                      url: '#',
+                                  },
+                                  {
+                                      id: 'menu-level-2.2',
+                                      title: 'Menu Level 2.2',
+                                      type: 'collapse',
+                                      children: [
+                                          {
+                                              id: 'menu-level-3.1',
+                                              title: 'Menu Level 3.1',
+                                              type: 'item',
+                                              url: '#',
+                                          },
+                                          {
+                                              id: 'menu-level-3.2',
+                                              title: 'Menu Level 3.2',
+                                              type: 'item',
+                                              url: '#',
+                                          }
+                                      ]
+                                  }
+                              ]
+                          }
+                      ]
+                  },
+                  {
+                      id: 'disabled-menu',
+                      title: 'Disabled Menu',
+                      type: 'item',
+                      url: '#',
+                      classes: 'nav-item disabled',
+                      icon: 'feather icon-power'
+                  },
+                  /*{
+                      id: 'buy-now',
+                      title: 'Buy Now',
+                      type: 'item',
+                      icon: 'feather icon-user',
+                      classes: 'nav-item',
+                      url: 'https://codedthemes.com',
+                      target: true,
+                      external: true,
+                      badge: {
+                          title: 'v1.0',
+                          type: 'label-primary'
+                      }
+                  }*/
         /*      ]
      }*/
     ]

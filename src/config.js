@@ -1,5 +1,6 @@
+import { Constants } from './network/Apicall'
 export default {
-    defaultPath: '/auth/signin-1',
+    defaultPath: (Constants.user_profile.login_status) ? '/dashboard/default' : '/auth/signin-1',
     //defaultPath: '/dashboard/default',
     basename: '/Mission_OnBoarding', //'/datta-able/react/default', // only at build time to set, like /datta-able
     layout: 'vertical', // vertical, horizontal (not available in lite version)

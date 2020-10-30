@@ -1,6 +1,6 @@
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
-import {Dropdown} from 'react-bootstrap';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { Dropdown } from 'react-bootstrap';
 import windowSize from 'react-window-size';
 
 import NavSearch from './NavSearch';
@@ -28,7 +28,7 @@ class NavLeft extends Component {
             <Aux>
                 <ul className="navbar-nav mr-auto">
                     <li><a href={DEMO.BLANK_LINK} className="full-screen" onClick={this.props.onFullScreen}><i className={iconFullScreen.join(' ')} /></a></li>
-                    <li className={navItemClass.join(' ')}>
+                    {/*<li className={navItemClass.join(' ')}>
                         <Dropdown alignRight={dropdownRightAlign}>
                             <Dropdown.Toggle variant={'link'} id="dropdown-basic">
                                 Dropdown
@@ -41,8 +41,8 @@ class NavLeft extends Component {
                                 </Dropdown.Menu>
                             </ul>
                         </Dropdown>
-                    </li>
-                    <li className="nav-item"><NavSearch/></li>
+        </li>
+                    <li className="nav-item" ><NavSearch /></li>*/}
                 </ul>
             </Aux>
         );
@@ -58,7 +58,7 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
     return {
-        onFullScreen: () => dispatch({type: actionTypes.FULL_SCREEN}),
+        onFullScreen: () => dispatch({ type: actionTypes.FULL_SCREEN }),
     }
 };
 

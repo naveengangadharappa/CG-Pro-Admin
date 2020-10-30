@@ -1,5 +1,6 @@
 import { Constants } from './Apicall'
 import axios from 'axios';
+import request from './Request'
 
 export function Getdata(url) {
   console.log("Url = ", url);
@@ -79,34 +80,65 @@ export function GetdataToken(url, token) {
   });
 }
 
-/*export function Postdata(url, data) {
+export function Postdata(url, data) {
   return new Promise((resolve, reject) => {
-    CheckConnectivity().then(resultcon => {
-      if (resultcon.status) {
-        axios({
-          method: 'post',
-          url: url,
-          timeout: 25000,
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': 'barer',
-            'deviceid': Constants.DeviceId,
-          },
-          data: data,
-        }).then(response => {
-          if (response.status == 200) {
-            resolve(response.data);
-          } else {
-            resolve({ status: false, message: "Server Not Responding" })
-          }
-        })
-          .catch(error => {
-            console.error(error);
-            reject(error);
-          });
+    /*CheckConnectivity().then(resultcon => {
+      if (resultcon.status) {*/
+    axios({
+      method: 'post',
+      url: url,
+      timeout: 25000,
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+        //'Authorization': 'barer',
+        //'deviceid': Constants.DeviceId,
+      },
+      data: data,
+    }).then(response => {
+      if (response.status == 200) {
+        resolve(response.data);
       } else {
-        resolve({ status: false, message: "Please Connect to the internet and Try again" })
+        resolve({ status: false, message: "Server Not Responding" })
+      }
+    }).catch(error => {
+      console.error(error);
+      reject(error);
+    });
+    /*} else {
+      resolve({ status: false, message: "Please Connect to the internet and Try again" })
+    }
+  }).catch(error => {
+    console.error(error);
+    reject(error);
+  });*/
+    setTimeout(() => {
+      console.log("entered settimeout");
+      resolve({ Status: false, Message: 'Network Request TimedOut' });
+    }, 30000);
+  });
+}
+
+export function Postdatanew(url, data) {
+  return new Promise((resolve, reject) => {
+    axios.defaults.withCredentials = true;
+    axios({
+      method: 'post',
+      url: url,
+      timeout: 25000,
+      baseURL: 'http://115.124.127.245:3001/Mission_Onboarding/',
+      withCredentials: true,
+      headers: {
+        'Content-Type': 'application/json',
+        //'Authorization': 'barer',
+        //'deviceid': Constants.DeviceId,
+      },
+      data: data
+    }).then(response => {
+      if (response.status == 200) {
+        resolve(response.data);
+      } else {
+        resolve({ status: false, message: "Server Not Responding" })
       }
     }).catch(error => {
       console.error(error);
@@ -119,44 +151,47 @@ export function GetdataToken(url, token) {
   });
 }
 
+
+
+
 export function Postfile(url, data) {
   console.log("calling file upload");
   return new Promise((resolve, reject) => {
-    CheckConnectivity().then(resultcon => {
-      if (resultcon.status) {
-        axios({
-          method: 'post',
-          url: url,
-          timeout: 25000,
-          headers: {
-            Accept: 'application/json',
-            'Content-Type': 'multipart/form-data',
-          },
-          data: data,
-        }).then(response => {
-          if (response.status == 200) {
-            resolve(response.data);
-          } else {
-            resolve({ status: false, message: "Server Not Responding" })
-          }
-        })
-          .catch(error => {
-            console.error(error);
-            reject(error);
-          });
+    /* CheckConnectivity().then(resultcon => {
+       if (resultcon.status) {*/
+    axios({
+      method: 'post',
+      url: url,
+      timeout: 25000,
+      /*headers: {
+        //Accept: 'application/json',
+        'Content-Type': 'multipart/form-data',
+      },*/
+      data: data,
+    }).then(response => {
+      if (response.status == 200) {
+        resolve(response.data);
       } else {
-        resolve({ status: false, message: "Please Connect to the internet and Try again" })
+        resolve({ status: false, message: "Server Not Responding" })
       }
-    }).catch(error => {
-      console.error(error);
-      reject(error);
-    });
+    })
+      .catch(error => {
+        console.error(error);
+        reject(error);
+      });
+    /* } else {
+       resolve({ status: false, message: "Please Connect to the internet and Try again" })
+     }
+   }).catch(error => {
+     console.error(error);
+     reject(error);
+   });*/
     setTimeout(() => {
       console.log("entered settimeout");
       resolve({ Status: false, Message: 'Network Request TimedOut' });
     }, 30000);
   });
-}*/
+}
 
 export function PostdataToken(url, data, token) {
   return new Promise((resolve, reject) => {

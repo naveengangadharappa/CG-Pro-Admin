@@ -10,7 +10,7 @@ import avatar2 from '../../assets/images/user/avatar-2.jpg';
 import avatar3 from '../../assets/images/user/avatar-3.jpg';
 import { fetch, adddata, deletedata } from "../../network/Apicall";
 
-class Levels extends React.Component {
+class Pattern extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
@@ -18,14 +18,13 @@ class Levels extends React.Component {
             validation_msg: '',
             showdata: true,
             edit: false,
-            leveldescription: '',
-            levelid: '',
-            leveltitle: '',
+            patternid: '',
+            patterntitle: '',
             color: 'darkred',
             filter: '',
             searchdata: '',
             searchbox: true,
-            leveldetails: {}
+            patterndetails: {}
         }
     }
 
@@ -33,7 +32,7 @@ class Levels extends React.Component {
         let params = {
             action: "fetchdata"
         }
-        let result = await fetch(params, 'level')
+        let result = await fetch(params, 'pattern')
         if (result.status) {
             this.setState({ data: result.data });
         } else {
@@ -46,22 +45,22 @@ class Levels extends React.Component {
             console.log("enterd load function");
             let params = {
                 action: 'fetchdata',
-                filter: this.state.filter,
-                levelid: 0,
-                leveltitle: '',
+                filter: '',
+                patterntitle: '',
+                patternid: 0,
             }
             switch (this.state.filter) {
-                case 'id': params.levelid = this.state.searchdata;
+                case 'id': params.patternid = this.state.searchdata;
                     params.filter = 'id';
                     break;
                 case 'title':
-                    params.leveltitle = this.state.searchdata;
+                    params.patterntitle = this.state.searchdata;
                     params.filter = 'title';
                     break;
                 default: params.filter = '';
             }
             // if (String(this.state.searchdata).length > 0) {
-            let result = await fetch(params, 'level')
+            let result = await fetch(params, 'pattern')
             if (result.status) {
                 this.setState({ data: result.data, validation_msg: '' });
             } else {
@@ -81,11 +80,10 @@ class Levels extends React.Component {
             console.log("state  = ", (this.state));
             let params = {
                 action: this.state.edit ? "updatedata" : "adddata",
-                title: this.state.leveltitle,
-                discription: this.state.leveldescription,
-                levelid: this.state.levelid
+                title: this.state.patterntitle,
+                patternid: this.state.patternid
             }
-            let result = await adddata(params, 'level');
+            let result = await adddata(params, 'pattern');
             if (result.status) {
                 await this.loaddata();
                 alert(result.message);
@@ -106,11 +104,11 @@ class Levels extends React.Component {
         }
     }
 
-    editdata = async (leveldata) => {
+    editdata = async (patterndata) => {
         try {
-            console.log("level details ", (leveldata));
-            this.setState({ showdata: false, edit: true, levelid: leveldata.Level_Id, leveltitle: leveldata.Level_Title, leveldescription: leveldata.Level_summary, leveldetails: leveldata });
-            console.log("level State ", (this.state));
+            console.log("Pattern details ", (patterndata));
+            this.setState({ showdata: false, edit: true, patternid: patterndata.pattern_Id, patterntitle: patterndata.pattern_Title, patterndetails: patterndata });
+            console.log("Pattern State ", (this.state));
         } catch (err) {
             console.log(err);
         }
@@ -118,18 +116,18 @@ class Levels extends React.Component {
 
     deletedata = async (data) => {
         try {
-            let del = window.confirm("Do you want to proceed with deleting this level ");
+            let del = window.confirm("Do you want to proceed with deleting this Pattern ");
             if (del) {
                 console.log("state  = ", (this.state));
                 let params = {
                     action: "deletedata",
-                    levelid: data.Level_Id
+                    patternid: data.pattern_Id
                 }
-                let result = await deletedata(params, 'level');
+                let result = await deletedata(params, 'pattern');
                 if (result.status) {
                     await this.loaddata();
                     alert(result.message);
-                    this.setState({ validation_msg: result.message, color: 'darkgreen' });
+                    this.setState({ validation_msg: result.message, color: 'darkgreen', showdata: true });
                 } else {
                     this.setState({ validation_msg: result.message, color: 'darkred' });
                 }
@@ -168,10 +166,10 @@ class Levels extends React.Component {
                         <Col>
                             <Card className='Recent-Users'>
                                 <Card.Header>
-                                    <Card.Title as='h5'>Levels{/*String(this.state.validation_msg).length > 0 ? <p style={{ color: "darkred" }}>{this.state.validation_msg} </p> : null*/}</Card.Title>
+                                    <Card.Title as='h5'>Pattern{/*String(this.state.validation_msg).length > 0 ? <p style={{ color: "darkred" }}>{this.state.validation_msg} </p> : null*/}</Card.Title>
                                     <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
                                     </p></center>
-                                    <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={this.addquestion} >Add Level</a></div>
+                                    <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={this.addquestion} >Add Pattern</a></div>
                                     <div style={{ float: "right", paddingRight: 5, flexDirection: 'row', paddingRight: 10, paddingBottom: 5 }}>
                                         <InputGroup  >
                                             <FormControl
@@ -196,9 +194,8 @@ class Levels extends React.Component {
                                     <Table responsive hover>
                                         <thead>
                                             <tr>
-                                                <th>Level No</th>
-                                                <th>Level Name</th>
-                                                <th>Descriptions</th>
+                                                <th>Pattern No</th>
+                                                <th>Pattern Title</th>
                                                 <th>last Modified_Time</th>
                                                 <th>Update/Delete</th>
                                             </tr>
@@ -208,13 +205,10 @@ class Levels extends React.Component {
                                                 this.state.data.map(item =>
                                                     <tr>
                                                         <th scope="row">
-                                                            {item.Level_Id}
+                                                            {item.pattern_Id}
                                                             <img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />
                                                         </th>
-                                                        <td>{item.Level_Title}</td>
-                                                        <td>
-                                                            <h6 className="mb-1">{item.Level_summary}</h6>
-                                                        </td>
+                                                        <td>{item.Title}</td>
                                                         <td>
                                                             <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_time}</h6>
                                                         </td>
@@ -238,29 +232,22 @@ class Levels extends React.Component {
                         <Col>
                             <Card>
                                 <Card.Header>
-                                    <Card.Title as="h5">Level Details</Card.Title>
+                                    <Card.Title as="h5">Pattern Details</Card.Title>
                                     {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
-                                    <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List Levels</a></div>
+                                    <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List Patterns</a></div>
 
                                 </Card.Header>
                                 <Card.Body>
-                                    <h5>Enter New Level Details</h5>
+                                    <h5>Enter New Pattern Details</h5>
                                     <hr />
                                     <Row>
                                         <Col md={6}>
                                             <Form>
-                                                <Form.Group controlId="formBasicEmail">
-                                                    <Form.Label>Level Title</Form.Label>
-                                                    <Form.Control type="email" placeholder="Enter email" value={this.state.leveltitle} onChange={(e) => { this.setState({ leveltitle: e.target.value }) }} />
-                                                    <Form.Text className="text-muted">
-                                                        Enter Level Title.
-                                                    </Form.Text>
-                                                </Form.Group>
                                                 <Form.Group controlId="exampleForm.ControlTextarea1">
-                                                    <Form.Label>Level Description</Form.Label>
-                                                    <Form.Control as="textarea" rows="3" value={this.state.leveldescription} onChange={(e) => { this.setState({ leveldescription: e.target.value }) }} />
+                                                    <Form.Label>Pattern Title</Form.Label>
+                                                    <Form.Control as="textarea" rows="3" value={this.state.patterntitle} onChange={(e) => { this.setState({ patterntitle: e.target.value }) }} />
                                                     <Form.Text className="text-muted">
-                                                        Enter Level Description in brief.
+                                                        Enter pattern Description in brief.
                                             </Form.Text>
                                                 </Form.Group>
                                                 <Button variant="primary" onClick={this.submit}>
@@ -279,4 +266,4 @@ class Levels extends React.Component {
     }
 }
 
-export default Levels;
+export default Pattern;
