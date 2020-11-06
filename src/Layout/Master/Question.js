@@ -9,22 +9,19 @@ import avatar1 from '../../assets/images/user/avatar-1.jpg';
 import avatar2 from '../../assets/images/user/avatar-2.jpg';
 import avatar3 from '../../assets/images/user/avatar-3.jpg';
 import NavSearch from '../../App/layout/AdminLayout/NavBar/NavLeft';
-import { fetch, adddata, fileupload, Constants } from "../../network/Apicall";
-
-/*showdata: true,
-showoptions: false,
-showhint: false,
-addquestion: false,
-addoption: false,
-addhint: false,
-editquestion: false,
-editoption: false,
-edithint: false,*/
+import { fetch, adddata, deletedata, fileupload, Constants, singlefileupload } from "../../network/Apicall";
+import { Picture } from 'react-responsive-picture';
+import { withRouter } from 'react-router-dom';
 class Questions extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
+            question_fileupload_pattern: Constants.question_fileupload_pattern,
+            option_fileupload_pattern: Constants.option_fileupload_pattern,
+            hint_fileupload_pattern: Constants.hint_fileupload_pattern,
             choice: 'showquestion',
+            addfile: '',
+            newfileid: '',
             data: [],
             options: [],
             hint: [],
@@ -33,6 +30,7 @@ class Questions extends React.Component {
             level: [],
             sublevel: [],
             pattern: [],
+            answerid: '',
             optionid: '',
             optiontitle: '',
             hintid: '',
@@ -46,13 +44,17 @@ class Questions extends React.Component {
             patternid: '',
             patterntitle: '',
             file: [],
-            color: 'darkred',
+            color: 'pink',
             filter: '',
             searchdata: '',
             questiondetails: {},
             searchbox: true,
             questiontitle: '',
-            fileid: ''
+            fileid: '',
+            imagesarray: [],
+            imageview: false,
+            questionfiles: [],
+            showfiles: false
         }
     }
 
@@ -66,7 +68,7 @@ class Questions extends React.Component {
             if (result.status) {
                 this.setState({ data: result.data });
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' })
+                this.setState({ validation_msg: result.message, color: 'pink' })
             }
         } catch (err) {
             console.log(err);
@@ -83,9 +85,27 @@ class Questions extends React.Component {
             }
             let result = await fetch(params, 'option')
             if (result.status) {
-                this.setState({ questionid: questiondetails.Question_Id, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, options: result.data, questiontitle: questiondetails.Question_Title, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, choice: 'showoption', showoptions: true });
+                if (result.data.length > 0) {
+                    let params = {
+                        action: "fetchdata",
+                        filter: "question",
+                        questionid: questiondetails.Question_Id
+                    }
+                    let answerresult = await fetch(params, 'answer')
+                    if (answerresult.status) {
+                        if (answerresult.data.length > 0) {
+                            this.setState({ answerid: answerresult.data[0].Id, questionid: questiondetails.Question_Id, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, options: result.data, questiontitle: questiondetails.Question_Title, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, choice: 'showoption', showoptions: true });
+                        } else {
+                            this.setState({ choice: 'showoption', questionid: questiondetails.Question_Id, options: result.data, validation_msg: "Answer not marked for this Question please Mark Answer", color: 'pink', })
+                        }
+                    } else {
+                        this.setState({ validation_msg: answerresult.message, color: 'pink', questionid: questiondetails.Question_Id, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, options: result.data, questiontitle: questiondetails.Question_Title, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, choice: 'showoption', showoptions: true })
+                    }
+                } else {
+                    this.setState({ choice: 'showoption', options: [], questionid: questiondetails.Question_Id, validation_msg: "No Options Availble", color: 'pink', })
+                }
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred', })
+                this.setState({ validation_msg: result.message, options: [], color: 'pink', })
             }
         } catch (err) {
             console.log(err);
@@ -97,15 +117,20 @@ class Questions extends React.Component {
             Constants.currentscreen = 'option';
             let params = {
                 action: "fetchdata",
-                filter: "id",
-                id: questiondetails.hintid
+                filter: "question",
+                id: questiondetails.hintid,
+                questionid: questiondetails.Question_Id
             }
             console.log("pattern id = " + questiondetails.pattern_Id);
             let result = await fetch(params, 'hint')
             if (result.status) {
-                this.setState({ questionid: questiondetails.Question_Id, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, hint: result.data, questiontitle: questiondetails.Question_Title, choice: 'showhint' });
+                if (result.data.length > 0) {
+                    this.setState({ questionid: questiondetails.Question_Id, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, hint: result.data, questiontitle: questiondetails.Question_Title, choice: 'showhint' });
+                } else {
+                    this.setState({ hint: [], questionid: questiondetails.Question_Id, patternid: questiondetails.pattern_Id, patterntitle: questiondetails.patterntitle, questiontitle: questiondetails.Question_Title, choice: 'showhint', validation_msg: 'No hint Available, Please Add Hint for this Question', color: 'pink', })
+                }
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred', })
+                this.setState({ choice: 'showhint', hint: [], validation_msg: result.message, color: 'pink', })
             }
         } catch (err) {
             console.log(err);
@@ -118,27 +143,23 @@ class Questions extends React.Component {
             let params = {
                 action: 'fetchdata',
                 filter: '',
-                questionid: 0,
-                questiontite: '',
-                levelid: 0,
-                sublevelid: 0,
-                patternid: 0
+                questiontitle: '',
+                leveltitle: '',
+                subleveltitle: '',
+                patterntitle: ''
             }
             switch (this.state.filter) {
-                case 'id': params.questionid = this.state.searchdata;
-                    params.filter = 'id';
-                    break;
                 case 'title':
-                    params.questiontite = this.state.searchdata;
+                    params.questiontitle = this.state.searchdata;
                     params.filter = 'title';
                     break;
-                case 'level': params.levelid = this.state.levelid;
+                case 'level': params.leveltitle = this.state.searchdata;
                     params.filter = 'level';
                     break;
-                case 'sublevel': params.sublevelid = this.state.sublevelid;
+                case 'sublevel': params.subleveltitle = this.state.searchdata;
                     params.filter = 'sublevel';
                     break;
-                case 'pattern': params.patternid = this.state.patternid;
+                case 'pattern': params.patterntitle = this.state.searchdata;
                     params.filter = 'pattern';
                     break;
                 default: params.filter = '';
@@ -148,16 +169,42 @@ class Questions extends React.Component {
             if (result.status) {
                 this.setState({ data: result.data, validation_msg: '' });
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' })
+                this.setState({ validation_msg: result.message, color: 'pink' })
             }
             /* } else {
                  console.log("ëlse enterd")
-                 this.setState({ validation_msg: 'Search Box Cannot be Empty', color: 'darkred' })
+                 this.setState({ validation_msg: 'Search Box Cannot be Empty', color: 'pink' })
              }*/
         } catch (err) {
             console.log(err);
         }
     }
+
+    getfileids = async (questionid) => {
+        try {
+            let params = {
+                type: 'question',
+                questionid: questionid
+            }
+            let result = await fetch(params, 'fileid')
+            if (result.status) {
+                this.setState({ questionfiles: result.data, showfiles: true, questionid: questionid, validation_msg: '' });
+            } else {
+                this.setState({ validation_msg: result.message, color: 'pink' })
+            }
+        } catch (err) {
+            console.log(err);
+        }
+    }
+    getimages = async (imageid) => {
+        const images = [
+            {
+                original: 'http://115.124.127.245:3000/Mission_Onboarding/get_file?fname=' + imageid,
+            }
+        ];
+        this.setState({ imagesarray: images, imageview: true });
+    }
+
 
     addoptions = async () => {
         try {
@@ -171,9 +218,9 @@ class Questions extends React.Component {
             if (result.status) {
                 await this.loaddata();
                 alert(result.message);
-                this.setState({ validation_msg: result.message, color: 'darkgreen', choice: 'showquestion' });
+                this.setState({ validation_msg: result.message, color: 'lightgreen', choice: 'showquestion' });
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' });
+                this.setState({ validation_msg: result.message, color: 'pink' });
             }
         } catch (err) {
             console.log(err);
@@ -182,7 +229,20 @@ class Questions extends React.Component {
 
     addhint = async () => {
         try {
-            console.log("state  = ", (this.state));
+            /*const params = new FormData();
+            for (const key of Object.keys(this.state.file)) {
+                params.append('file', this.state.file[key]);
+            }
+            params.append("type", "question");
+            params.append("questionid", result.data[0].Question_Id);
+            let resultfile = await fileupload(params);
+            if (resultfile.status) {
+                await this.loaddata();
+                alert(result.message);
+                this.setState({ validation_msg: result.message, color: 'lightgreen' });
+            } else {
+                this.setState({ validation_msg: resultfile.message, color: 'pink' });
+            }*/
             let params = {
                 action: "adddata",
                 title: this.state.hinttitle,
@@ -193,9 +253,9 @@ class Questions extends React.Component {
             if (result.status) {
                 await this.loaddata();
                 alert(result.message);
-                this.setState({ validation_msg: result.message, color: 'darkgreen', choice: 'showquestion' });
+                this.setState({ validation_msg: result.message, color: 'lightgreen', choice: 'showquestion' });
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' });
+                this.setState({ validation_msg: result.message, color: 'pink' });
             }
         } catch (err) {
             console.log(err);
@@ -216,9 +276,9 @@ class Questions extends React.Component {
             if (result.status) {
                 await this.loaddata();
                 alert(result.message);
-                this.setState({ validation_msg: result.message, color: 'darkgreen', choice: 'showquestion' });
+                this.setState({ validation_msg: result.message, color: 'lightgreen', choice: 'showquestion' });
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' });
+                this.setState({ validation_msg: result.message, color: 'pink' });
             }
         } catch (err) {
             console.log(err);
@@ -239,9 +299,9 @@ class Questions extends React.Component {
             if (result.status) {
                 await this.loaddata();
                 alert(result.message);
-                this.setState({ validation_msg: result.message, color: 'darkgreen', choice: 'showquestion' });
+                this.setState({ validation_msg: result.message, color: 'lightgreen', choice: 'showquestion' });
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' });
+                this.setState({ validation_msg: result.message, color: 'pink' });
             }
         } catch (err) {
             console.log(err);
@@ -260,9 +320,9 @@ class Questions extends React.Component {
                 let result = await adddata(params, 'hint');
                 if (result.status) {
                     alert(result.message);
-                    this.setState({ validation_msg: result.message, color: 'darkgreen', choice: 'showquestion' });
+                    this.setState({ validation_msg: result.message, color: 'lightgreen', choice: 'showquestion' });
                 } else {
-                    this.setState({ validation_msg: result.message, color: 'darkred' });
+                    this.setState({ validation_msg: result.message, color: 'pink' });
                 }
             }
         } catch (err) {
@@ -282,9 +342,9 @@ class Questions extends React.Component {
                 let result = await adddata(params, 'option');
                 if (result.status) {
                     alert(result.message);
-                    this.setState({ validation_msg: result.message, color: 'darkgreen', choice: 'showquestion' });
+                    this.setState({ validation_msg: result.message, color: 'lightgreen', choice: 'showquestion' });
                 } else {
-                    this.setState({ validation_msg: result.message, color: 'darkred' });
+                    this.setState({ validation_msg: result.message, color: 'pink' });
                 }
             }
         } catch (err) {
@@ -293,37 +353,112 @@ class Questions extends React.Component {
     }
 
     submiteditquestion = async () => {
-        console.log("state  = ", (this.state));
-        /*const params = new FormData();
-        for (const key of Object.keys(this.state.file)) {
-            params.append('file', this.state.file[key]);
+        console.log("sublevel id =" + this.state.sublevelid);
+        console.log("sublevel title =" + this.state.subleveltitle);
+        let paramsdata = {
+            action: "updatedata",
+            questionid: this.state.questionid,
+            questiontitle: this.state.questiontitle,
+            levelid: this.state.levelid,
+            sublevelid: this.state.sublevelid,
+            patternid: this.state.patternid,
         }
-        params.append("type", "question");
-        params.append("questionid", 0);
-        let result = await fileupload(params);
+        console.log("param data = ", (paramsdata));
+        let result = await adddata(paramsdata, 'question');
         if (result.status) {
+            await this.loaddata();
             alert(result.message);
-            this.setState({ validation_msg: result.message, color: 'darkgreen' });
+            this.setState({ validation_msg: result.message, showdata: true, choice: 'showquestion', color: 'lightgreen' });
+
+            /* console.log("Question Details = ", (result.data));
+             if (this.state.patternid == 3 || this.state.patternid == 4) {
+ 
+                 const params = new FormData();
+                 for (const key of Object.keys(this.state.file)) {
+                     params.append('file', this.state.file[key]);
+                 }
+                 params.append("type", "question");
+                 params.append("action", "updatedata");
+                 params.append("fileid", this.state.fileid);
+                 params.append("questionid", result.data[0].Question_Id);
+                 let resultfile = await fileupload(params);
+                 if (resultfile.status) {
+                     await this.loaddata();
+                     alert(result.message);
+                     this.setState({ validation_msg: result.message, showdata: true, color: 'lightgreen' });
+                 } else {
+                     this.setState({ validation_msg: resultfile.message, color: 'pink' });
+                 }
+             } else {
+                 await this.loaddata();
+                 alert(result.message);
+                 this.setState({ validation_msg: result.message, showdata: true, color: 'lightgreen' });
+             }*/
         } else {
-            this.setState({ validation_msg: result.message, color: 'darkred' });
-        }*/
+            this.setState({ validation_msg: result.message, color: 'pink' });
+        }
     }
 
     submitaddquestion = async () => {
-        console.log("state  = ", (this.state));
-        /*const params = new FormData();
-        for (const key of Object.keys(this.state.file)) {
-            params.append('file', this.state.file[key]);
+        let paramsdata = {
+            action: "adddata",
+            questiontitle: this.state.questiontitle,
+            levelid: this.state.levelid,
+            sublevelid: this.state.sublevelid,
+            patternid: this.state.patternid
         }
-        params.append("type", "question");
-        params.append("questionid", 0);
-        let result = await fileupload(params);
+        let result = await adddata(paramsdata, 'question');
         if (result.status) {
-            alert(result.message);
-            this.setState({ validation_msg: result.message, color: 'darkgreen' });
+            console.log("Question Details = ", (result.data));
+            if (this.state.patternid == 3 || this.state.patternid == 4) {
+
+                const params = new FormData();
+                for (const key of Object.keys(this.state.file)) {
+                    params.append('file', this.state.file[key]);
+                }
+                params.append("type", "question");
+                params.append("action", "adddata");
+                params.append("questionid", result.data[0].Question_Id);
+                let resultfile = await fileupload(params);
+                if (resultfile.status) {
+                    await this.loaddata();
+                    alert(result.message);
+                    this.setState({ validation_msg: result.message, showdata: true, color: 'lightgreen', choice: 'showquestion' });
+                } else {
+                    this.setState({ validation_msg: resultfile.message, color: 'pink' });
+                }
+            } else {
+                await this.loaddata();
+                alert(result.message);
+                this.setState({ validation_msg: result.message, showdata: true, color: 'lightgreen' });
+            }
         } else {
-            this.setState({ validation_msg: result.message, color: 'darkred' });
-        }*/
+            this.setState({ validation_msg: result.message, color: 'pink' });
+        }
+    }
+
+    updateAnswer = async (optionid) => {
+        try {
+            let del = window.confirm("Do you want to Mark this Option as Answer ");
+            if (del) {
+                console.log("Answer Id = " + this.state.answerid);
+                let params = {
+                    action: String(this.state.answerid).length > 0 ? "updatedata" : "adddata",
+                    questionid: this.state.questionid,
+                    answerid: optionid
+                }
+                let result = await adddata(params, 'answer');
+                if (result.status) {
+                    await this.loaddata();
+                    alert(result.message);
+                    this.setState({ validation_msg: result.message, choice: 'showquestion', showdata: true, color: 'lightgreen' });
+                } else {
+                    this.setState({ validation_msg: result.message, color: 'pink' });
+                }
+            }
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     addquestion = async () => {
@@ -342,13 +477,13 @@ class Questions extends React.Component {
                     if (patternresult) {
                         this.setState({ pattern: patternresult.data });
                     } else {
-                        this.setState({ validation_msg: patternresult.message, color: 'darkred' })
+                        this.setState({ validation_msg: patternresult.message, color: 'pink' })
                     }
                 } else {
-                    this.setState({ validation_msg: sublevelresult.message, color: 'darkred' })
+                    this.setState({ validation_msg: sublevelresult.message, color: 'pink' })
                 }
             } else {
-                this.setState({ validation_msg: levelresult.message, color: 'darkred' })
+                this.setState({ validation_msg: levelresult.message, color: 'pink' })
             }
         } catch (err) {
             console.log(err);
@@ -357,23 +492,11 @@ class Questions extends React.Component {
 
     editdata = async (data) => {
         try {
-            /* Level_Id: 1
-             Question_Id: 2
-             Question_Title: "question 2"
-             Sublevel_Id: 1
-             answerid: 3
-             answertitle: "Option 3"
-             hintid: 2
-             hinttitle: "hint 2"
-             modified_time: "2020-10-14T03:20:42.000Z"
-             pattern_Id: 2
-             patterntitle: "50/50 eleiminate 2 wrong option clicking on hint"*/
-
             let params = {
                 action: "fetchdata"
             }
             let title = [];
-            this.setState({ choice: 'editquestion', showdata: false, edit: true, questiondetails: data, questiondescription: data.Question_Title });
+            this.setState({ choice: 'editquestion', showdata: false, edit: true, questiondetails: data, questionid: data.Question_Id, questiondescription: data.Question_Title, questiontitle: data.Question_Title });
             let levelresult = await fetch(params, 'level')
             if (levelresult.status) {
                 title = levelresult.data.filter(item => { if (item.Level_Id == data.Level_Id) { return item.Level_Title } })
@@ -390,17 +513,17 @@ class Questions extends React.Component {
                     } else {
                         this.setState({ sublevel: sublevelresult.data, sublevelid: data.Id, patternid: data.pattern_Id, patterntitle: data.patterntitle });
                     }
-                    let patternresult = await fetch(params, 'pattern')
+                    /*let patternresult = await fetch(params, 'pattern')
                     if (patternresult) {
                         this.setState({ pattern: patternresult.data });
                     } else {
-                        this.setState({ validation_msg: patternresult.message, color: 'darkred' });
-                    }
+                        this.setState({ validation_msg: patternresult.message, color: 'pink' });
+                    }*/
                 } else {
-                    this.setState({ validation_msg: sublevelresult.message, color: 'darkred' });
+                    this.setState({ validation_msg: sublevelresult.message, color: 'pink' });
                 }
             } else {
-                this.setState({ validation_msg: levelresult.message, color: 'darkred' });
+                this.setState({ validation_msg: levelresult.message, color: 'pink' });
             }
         } catch (err) {
             console.log(err);
@@ -416,12 +539,13 @@ class Questions extends React.Component {
                     questionid: data.Question_Id
                 }
                 this.setState({ choice: "showquestion", showdata: false })
-                let result = await this.deletedata(params, 'level')
+                let result = await deletedata(params, 'question')
                 if (result.status) {
+                    await this.loaddata();
                     alert(result.message);
-                    this.setState({ validation_msg: result.message, color: 'darkgreen' });
+                    this.setState({ validation_msg: result.message, color: 'lightgreen' });
                 } else {
-                    this.setState({ validation_msg: result.message, color: 'darkred' });
+                    this.setState({ validation_msg: result.message, color: 'pink' });
                 }
             }
         } catch (err) {
@@ -431,17 +555,20 @@ class Questions extends React.Component {
 
     displayfilter = async (option) => {
         let params = {
-            action: "fetchdata"
+            action: "fetchdata",
+            filter: '',
+            questiontitle: '',
+            leveltitle: '',
+            subleveltitle: '',
+            patterntitle: ''
         }
         switch (option) {
-            case 'id': this.setState({ filter: 'id', searchbox: true, });
-                break;
             case 'title': this.setState({ filter: 'title', searchbox: true, });
                 break;
             case 'level':
                 let levelresult = await fetch(params, 'level')
                 if (levelresult.status) {
-                    this.setState({ filter: 'level', searchbox: false, level: levelresult.data });
+                    this.setState({ filter: 'level', searchbox: true, level: levelresult.data });
                 } else {
                     this.setState({ validation_msg: levelresult.message })
                 }
@@ -449,7 +576,7 @@ class Questions extends React.Component {
             case 'sublevel':
                 let sublevelresult = await fetch(params, 'sublevel')
                 if (sublevelresult.status) {
-                    this.setState({ filter: 'sublevel', searchbox: false, sublevel: sublevelresult.data });
+                    this.setState({ filter: 'sublevel', searchbox: true, sublevel: sublevelresult.data });
                 } else {
                     this.setState({ validation_msg: sublevelresult.message })
                 }
@@ -457,7 +584,7 @@ class Questions extends React.Component {
             case 'pattern':
                 let patternresult = await fetch(params, 'pattern')
                 if (patternresult.status) {
-                    this.setState({ filter: 'pattern', searchbox: false, pattern: patternresult.data });
+                    this.setState({ filter: 'pattern', searchbox: true, pattern: patternresult.data });
                 } else {
                     this.setState({ validation_msg: patternresult.message })
                 }
@@ -490,8 +617,90 @@ class Questions extends React.Component {
         }
     }
 
+    addhintfile = async (hintdetails) => {
+        console.log("new file = ", this.state.newfileid);
+        const params = new FormData();
+        params.append('file', this.state.newfileid);
+        params.append('type', "question");
+        params.append('questionid', '00');
+        let resultfile = await singlefileupload(params);
+        if (resultfile.status) {
+            console.log("öld file ids = " + this.state.fileid);
+            let newfiles = hintdetails.File_Ids == '' || hintdetails.File_Ids == null ? hintdetails.File_Ids + `,${resultfile.filedetails.filename}` : `${resultfile.filedetails.filename}`
+            this.setState({ fileid: newfiles })
+            let paramsdata = {
+                action: "updatedata",
+                title: hintdetails.Title,
+                questionid: this.state.questionid,
+                patternid: this.state.patternid,
+                fileid: this.state.fileid,//pass file id
+                hintid: hintdetails.Id
+            }
+            let result = await adddata(paramsdata, 'hint');
+            if (result.status) {
+                await this.loaddata();
+                alert(result.message);
+                this.setState({ validation_msg: result.message, showdata: true, color: 'lightgreen', choice: 'showquestion', addfile: '' });
+            } else {
+                this.setState({ validation_msg: result.message, color: 'pink' });
+            }
+        } else {
+            this.setState({ validation_msg: resultfile.message, color: 'pink' });
+        }
+    }
+
+    deltefile = async (details, fileid) => {
+        console.log("pos =", String(details.File_Ids).search(fileid));
+        let pos = String(details.File_Ids).search(fileid);
+        let newfiles = pos > 0 ? String(`,${details.File_Ids}`).replace(fileid, '') : String(`${details.File_Ids},`).replace(fileid, '');
+        console.log("new files =" + newfiles);
+        let paramsdata = {
+            action: "updatedata",
+            title: details.Title,
+            questionid: this.state.questionid,
+            patternid: this.state.patternid,
+            fileid: newfiles,//pass file id
+            hintid: details.Id
+        }
+        let result = await adddata(paramsdata, 'hint');
+        if (result.status) {
+            await this.loaddata();
+            alert(result.message);
+            this.setState({ validation_msg: result.message, showdata: true, color: 'lightgreen', choice: 'showquestion', addfile: '' });
+        } else {
+            this.setState({ validation_msg: result.message, color: 'pink' });
+        }
+    }
+
+
     render() {
 
+        if (this.state.imageview) {
+            return (
+                <Aux>
+                    <Row>
+                        <Col>
+                            <Card className='Recent-Users'>
+                                <Card.Header>
+                                    <a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ imageview: false }) }}>close </a>
+                                </Card.Header>
+                                <Card.Body>
+                                    <Picture src={this.state.imagesarray[0].original}
+                                        media="(max-width: 500px)"
+                                        sizes="(min-width: 36em) 33.3vw, 90vw" >
+
+                                    </Picture>
+                                    {/* <ImageGallery items={this.state.imagesarray} style={{ height: '100%', weight: '100%' }} />
+                                    <div style={{display:flexb}}>
+                                        <img src={this.state.imagesarray[0].original} alt="No Imgae found" style={{ height: '50%', weight: '50%' }} />
+                                    </div>*/}
+                                </Card.Body>
+                            </Card>
+                        </Col>
+                    </Row>
+                </Aux>
+            )
+        }
         switch (this.state.choice) {
             case 'showquestion':
                 return (
@@ -501,12 +710,13 @@ class Questions extends React.Component {
                                 <Card className='Recent-Users'>
                                     <Card.Header >
                                         <Card.Title as='h5'>Questions</Card.Title>
-                                        <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
                                         </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={this.addquestion} >Add Question</a></div>
                                         <div style={{ float: "right", paddingRight: 5, flexDirection: 'row', paddingRight: 10, paddingBottom: 5 }}>
                                             <InputGroup  >
-                                                {this.state.searchbox ? <FormControl
+                                                {/*this.state.searchbox ? <FormControl
                                                     placeholder="Search...."
                                                     aria-label="Recipient's username"
                                                     aria-describedby="basic-addon2"
@@ -536,15 +746,22 @@ class Questions extends React.Component {
                                                                 }
                                                             </Form.Control> : null}
                                                     </div>
-                                                }
+                                                            */}
+                                                <FormControl
+                                                    placeholder="Search...."
+                                                    aria-label="Recipient's username"
+                                                    aria-describedby="basic-addon2"
+                                                    name='search'
+                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }) }}
+                                                />
                                                 <Dropdown as={InputGroup.Append}>
                                                     <Dropdown.Toggle split variant="secondary" id="dropdown-split-basic-2" />
                                                     <Button variant="secondary" onClick={this.loaddata}>Search</Button>
                                                     <Dropdown.Menu>
-                                                        <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('title') }}>Search by Name</Dropdown.Item>
-                                                        <Dropdown.Item hred="#/action-3" onClick={() => { this.displayfilter('level') }}>Search by level</Dropdown.Item>
-                                                        <Dropdown.Item hred="#/action-4" onClick={() => { this.displayfilter('sublevel') }}>Search by sublevel</Dropdown.Item>
-                                                        <Dropdown.Item hred="#/action-5" onClick={() => { this.displayfilter('pattern') }}>Search by pattern</Dropdown.Item>
+                                                        <Dropdown.Item hred="#/action-2" onClick={() => { this.setState({ filter: 'title', searchbox: true, }); }}>Search by Name</Dropdown.Item>
+                                                        <Dropdown.Item hred="#/action-3" onClick={() => { this.setState({ filter: 'level', searchbox: true, }); }}>Search by level</Dropdown.Item>
+                                                        <Dropdown.Item hred="#/action-4" onClick={() => { this.setState({ filter: 'sublevel', searchbox: true, }); }}>Search by sublevel</Dropdown.Item>
+                                                        <Dropdown.Item hred="#/action-5" onClick={() => { this.setState({ filter: 'pattern', searchbox: true, }); }}>Search by pattern</Dropdown.Item>
                                                     </Dropdown.Menu>
                                                 </Dropdown>
 
@@ -556,12 +773,12 @@ class Questions extends React.Component {
                                             <thead>
                                                 <tr>
                                                     <th>Question Title</th>
-                                                    <th>Answer</th>
                                                     <th>pattern</th>
-                                                    <th>Level Id</th>
-                                                    <th>SubLevel Id</th>
+                                                    <th>Level</th>
+                                                    <th>SubLevel </th>
                                                     <th>Options</th>
                                                     <th>Hint</th>
+                                                    <th>Files</th>
                                                     <th>Edit/Delete</th>
                                                 </tr>
                                             </thead>
@@ -573,23 +790,27 @@ class Questions extends React.Component {
                                                                 {item.Question_Title}
                                                             </th>
                                                             <td>
-                                                                <h6 className="mb-1">{item.answertitle}</h6>
-                                                            </td>
-
-                                                            <td>
                                                                 <h6 className="text-muted">{item.patterntitle}</h6>
                                                             </td>
                                                             <td>
-                                                                <h6 className="text-muted">{item.Level_Id}</h6>
+                                                                <h6 className="text-muted">{item.Level_Title}</h6>
                                                             </td>
                                                             <td>
-                                                                <h6 className="text-muted">{item.Sublevel_Id}</h6>
+                                                                <h6 className="text-muted">{item.Sublevel_Title}</h6>
                                                             </td>
                                                             <td>
                                                                 <a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.loadoptions(item) }}>view Options</a>
                                                             </td>
                                                             <td>
                                                                 <a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.loadHints(item) }}>view Hint</a>
+                                                            </td>
+                                                            <td>
+                                                                <a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.getfileids(item.Question_Id) }}>view Files</a><br></br><br></br>
+                                                                {this.state.showfiles && this.state.questionid == item.Question_Id ?
+                                                                    this.state.questionfiles.length > 0 ?
+                                                                        this.state.questionfiles.map(item =>
+                                                                            <a href={'http://115.124.127.245:3000/Mission_Onboarding/get_file?fname=' + item.File_Id} className="label theme-bg2 text-white f-12" target="_blank">View Image</a>
+                                                                        ) : "No File" : null}
                                                             </td>
                                                             <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.editdata(item) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
                                                         </tr>
@@ -614,7 +835,8 @@ class Questions extends React.Component {
                                     <Card.Header>
                                         <Card.Title as='h5'>Option Details</Card.Title>
                                         <p> <b>Question :{this.state.questiontitle}</b></p>
-                                        <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
                                         </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "addoption" }) }} >Add Options</a></div>
@@ -635,10 +857,10 @@ class Questions extends React.Component {
                                                     this.state.options.map(item =>
                                                         <tr>
                                                             <td>{item.Title}</td>
-                                                            <td>{item.File_Id ? item.File_Id : "No file "}</td>
+                                                            <td>{item.File_Id ? item.File_Id == '' || item.File_Id == "null" ? "No file " : <a href={'http://115.124.127.245:3000/Mission_Onboarding/get_file?fname=' + item.File_Id} className="label theme-bg2 text-white f-12" target="_blank"/*onClick={() => { this.getimages(item.File_Id) }}*/>View Image</a> : "No file "}</td>
                                                             <td>{item.modified_time}</td>
                                                             <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ optionid: item.Option_Id, optiontitle: item.Title, fileid: item.File_Id, choice: "editoption" }) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deleteoptions(item.Option_Id) }}>Delete</a></td>
-                                                            <td><a href={DEMO.BLANK_LINK} className="label text-green f-12" onClick={() => { this.setState({ optionid: item.Option_Id, optiontitle: item.Title, fileid: item.File_Id, }) }}><b>Mark as Answer</b></a></td>
+                                                            <td>{item.Option_Id == this.state.answerid ? <p style={{ backgroundColor: 'lightblue', borderRadius: 5 }}><b>{'Answer'}</b></p> : <a href={DEMO.BLANK_LINK} className="label text-lightgreen f-12" onClick={() => { this.updateAnswer(item.Option_Id) }}><b>Mark as Answer</b></a>}</td>
                                                         </tr>
                                                     ) :
                                                     null}
@@ -661,7 +883,8 @@ class Questions extends React.Component {
                                     <Card.Header>
                                         <Card.Title as='h5'>Hint Details</Card.Title>
                                         <p> <b>Question :{this.state.questiontitle}</b></p>
-                                        <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 && this.state.alertcolor === "lightgreen" ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
                                         </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                         {this.state.hint.length > 0 ? null : <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "addhint" }) }} >Add Hint</a></div>}
@@ -671,7 +894,7 @@ class Questions extends React.Component {
                                             <thead>
                                                 <tr>
                                                     <th>Hint Title</th>
-                                                    <th>Files</th>
+                                                    <th>Files  </th>
                                                     <th>Modified_Time</th>
                                                     <th>Edit/Delete</th>
                                                 </tr>
@@ -681,7 +904,25 @@ class Questions extends React.Component {
                                                     this.state.hint.map(item =>
                                                         <tr>
                                                             <td>{item.Title}</td>
-                                                            <td>{item.File_Ids ? item.File_Id : "No file "}</td>
+                                                            <td>{item.File_Ids ? item.File_Ids == '' || item.File_Ids == "null" ? "No file " :
+                                                                String(item.File_Ids).split(',').map(fileid =>
+                                                                    <a href={'http://115.124.127.245:3000/Mission_Onboarding/get_file?fname=' + fileid} className="label theme-bg2 text-white f-12" target="_blank">View Image <a href={DEMO.BLANK_LINK} onClick={() => { this.deltefile(item, fileid) }}>
+                                                                        <i className="feather icon-x color white" style={{ color: 'lightgreen' }} />
+                                                                    </a></a>
+                                                                )
+                                                                : "No file "}<a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ addfile: 'hint' }) }}>Add Image</a>
+                                                                <br></br>
+                                                                {this.state.addfile == 'hint' ?
+                                                                    <Form>
+                                                                        <Form.Group controlId="addhintimage">
+                                                                            <Form.Label>Add Hint Images</Form.Label>
+                                                                            <Form.Control type="file" name="file" accept="image/*" onChange={(e) => { console.log("e.target = ", (e.target.files)); this.setState({ newfileid: e.target.files[0] }) }} />
+                                                                            <Form.Text className="text-muted">
+                                                                                Upload hint File.
+                                                                        </Form.Text>
+                                                                            <a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.addhintfile(item) }}>Submit</a>
+                                                                        </Form.Group>
+                                                                    </Form> : null}</td>
                                                             <td>{item.modified_time}</td>
                                                             <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ hintid: item.Id, hinttitle: item.Title, fileid: item.File_Ids, choice: "edithint" }) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletehint(item.Id) }}>Delete</a></td>
                                                         </tr>
@@ -705,7 +946,9 @@ class Questions extends React.Component {
                                 <Card>
                                     <Card.Header>
                                         <Card.Title as="h5">Question Details</Card.Title>
-                                        {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
+                                        </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                     </Card.Header>
                                     <Card.Body>
@@ -714,28 +957,30 @@ class Questions extends React.Component {
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    <Form.Group controlId="Quest desc">
                                                         <Form.Label>Question Description</Form.Label>
-                                                        <Form.Control as="textarea" rows="3" value={this.state.questiondescription} onChange={(e) => { this.setState({ questiondescription: e.target.value }) }} />
+                                                        <Form.Control as="textarea" rows="3" value={this.state.questiontitle} onChange={(e) => { this.setState({ questiontitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Question data.
                                                         </Form.Text>
                                                     </Form.Group>
-                                                    {this.state.patternid == 3 || this.state.patternid == 4 ? <Form.Group controlId="exampleForm.ControlTextarea1">
-                                                        <Form.Label>Question Images</Form.Label>
-                                                        <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
-                                                        <Form.Text className="text-muted">
-                                                            Upload Files for this question.
+                                                    {this.state.patternid == 3 ?
+                                                        <Form.Group controlId="Questimage">
+                                                            <Form.Label>Question Images</Form.Label>
+                                                            <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
+                                                            <Form.Text className="text-muted">
+                                                                Upload Files for this question.
                                                         </Form.Text>
-                                                    </Form.Group> : null}
+                                                        </Form.Group>
+                                                        : null}
 
                                                 </Form>
                                             </Col>
                                             <Col md={6}>
-                                                <Form.Group controlId="exampleForm.ControlSelect1">
+                                                <Form.Group controlId="selectlevel">
                                                     <Form.Label>Select Level</Form.Label>
                                                     <Form.Control as="select" onChange={(e) => { this.setState({ levelid: e.target.value }) }}>
-                                                        <option value={this.state.levelid} selected>{this.state.leveltitle}</option>
+                                                        <option value={''}>{''}</option>
                                                         {this.state.level.length > 0 ?
                                                             this.state.level.map(item => <option value={item.Level_Id}>{item.Level_Title}</option>) : null
                                                             //this.state.level.map(item => item.Level_Id == this.state.levelid ? null : <option value={item.Level_Id}>{item.Level_Title}</option>) : null
@@ -743,22 +988,22 @@ class Questions extends React.Component {
 
                                                     </Form.Control>
                                                 </Form.Group>
-                                                <Form.Group controlId="exampleForm.ControlSelect1">
+                                                <Form.Group controlId="selectsublevel">
                                                     <Form.Label>Select Sub-Level</Form.Label>
                                                     <Form.Control as="select" onChange={(e) => { this.setState({ sublevelid: e.target.value }) }}>
-                                                        <option value={this.state.sublevelid} selected>{this.state.subleveltitle}</option>
+                                                        <option value={''}>{''}</option>
                                                         {this.state.sublevel.length > 0 ?
                                                             this.state.sublevel.map(item => <option value={item.Id}>{item.title}</option>) : null
                                                             // this.state.sublevel.map(item => item.Id == this.state.sublevelid ? null : <option value={item.Id}>{item.title}</option>) : null
                                                         }
                                                     </Form.Control>
                                                 </Form.Group>
-                                                <Form.Group controlId="exampleForm.ControlSelect1">
+                                                <Form.Group controlId="selectpattern">
                                                     <Form.Label>Select pattern</Form.Label>
                                                     <Form.Control as="select" onChange={(e) => { this.setState({ patternid: e.target.value }) }}>
-                                                        <option value={this.state.patternid} selected>{this.state.patterntitle}</option>
+                                                        <option value={''}>{''}</option>
                                                         {this.state.pattern.length > 0 ?
-                                                            this.state.pattern.map(item => item.pattern_Id == this.state.patternid ? null : <option value={item.pattern_Id}>{item.Title}</option>) : null
+                                                            this.state.pattern.map(item => <option value={item.pattern_Id}>{item.Title}</option>) : null
                                                         }
                                                     </Form.Control>
                                                 </Form.Group>
@@ -782,7 +1027,9 @@ class Questions extends React.Component {
                                 <Card>
                                     <Card.Header>
                                         <Card.Title as="h5">Option Details</Card.Title>
-                                        {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
+                                        </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                     </Card.Header>
                                     <Card.Body>
@@ -791,14 +1038,14 @@ class Questions extends React.Component {
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    <Form.Group controlId="optiondesc">
                                                         <Form.Label>Option Description</Form.Label>
                                                         <Form.Control as="textarea" rows="3" value={this.state.optiontitle} onChange={(e) => { this.setState({ optiontitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Option Title.
                                                         </Form.Text>
                                                     </Form.Group>
-                                                    {this.state.patternid == 3 || this.state.patternid == 4 ? <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    {this.state.option_fileupload_pattern.includes(this.state.patternid) ? <Form.Group controlId="optionimages">
                                                         <Form.Label>Option Images</Form.Label>
                                                         <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
                                                         <Form.Text className="text-muted">
@@ -827,7 +1074,9 @@ class Questions extends React.Component {
                                 <Card>
                                     <Card.Header>
                                         <Card.Title as="h5">Hint Details</Card.Title>
-                                        {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
+                                        </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                     </Card.Header>
                                     <Card.Body>
@@ -836,18 +1085,18 @@ class Questions extends React.Component {
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    <Form.Group controlId="hintdesc">
                                                         <Form.Label>Hint Description</Form.Label>
                                                         <Form.Control as="textarea" rows="3" value={this.state.hinttitle} onChange={(e) => { this.setState({ hinttitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Hint Title.
                                                         </Form.Text>
                                                     </Form.Group>
-                                                    {this.state.patternid == 3 || this.state.patternid == 4 ? <Form.Group controlId="exampleForm.ControlTextarea1">
-                                                        <Form.Label>Question Images</Form.Label>
+                                                    {this.state.hint_fileupload_pattern.includes(this.state.patternid) ? <Form.Group controlId="hint image">
+                                                        <Form.Label>Hint Images</Form.Label>
                                                         <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
                                                         <Form.Text className="text-muted">
-                                                            Upload Files for this question.
+                                                            Upload Files for this Hint.
                                                         </Form.Text>
                                                     </Form.Group> : null}
 
@@ -872,7 +1121,9 @@ class Questions extends React.Component {
                                 <Card>
                                     <Card.Header>
                                         <Card.Title as="h5">Question Details</Card.Title>
-                                        {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
+                                        </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                     </Card.Header>
                                     <Card.Body>
@@ -881,25 +1132,26 @@ class Questions extends React.Component {
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    <Form.Group controlId="questiondesc">
                                                         <Form.Label>Question Description</Form.Label>
-                                                        <Form.Control as="textarea" rows="3" value={this.state.questiondescription} onChange={(e) => { this.setState({ questiondescription: e.target.value }) }} />
+                                                        <Form.Control as="textarea" rows="3" value={this.state.questiontitle} onChange={(e) => { this.setState({ questiontitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Question data.
                                                         </Form.Text>
                                                     </Form.Group>
-                                                    {this.state.patternid == 3 || this.state.patternid == 4 ? <Form.Group controlId="exampleForm.ControlTextarea1">
-                                                        <Form.Label>Question Images</Form.Label>
-                                                        <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
-                                                        <Form.Text className="text-muted">
-                                                            Upload Files for this question.
+                                                    {this.state.question_fileupload_pattern.includes(this.state.patternid) ?
+                                                        <Form.Group controlId="questionimage">
+                                                            <Form.Label>Question Images</Form.Label>
+                                                            <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
+                                                            <Form.Text className="text-muted">
+                                                                Upload Files for this question.
                                                         </Form.Text>
-                                                    </Form.Group> : null}
+                                                        </Form.Group> : null}
 
                                                 </Form>
                                             </Col>
                                             <Col md={6}>
-                                                <Form.Group controlId="exampleForm.ControlSelect1">
+                                                <Form.Group controlId="question level">
                                                     <Form.Label>Select Level</Form.Label>
                                                     <Form.Control as="select" onChange={(e) => { this.setState({ levelid: e.target.value }) }}>
                                                         <option value={this.state.levelid} selected>{this.state.leveltitle}</option>
@@ -910,7 +1162,7 @@ class Questions extends React.Component {
 
                                                     </Form.Control>
                                                 </Form.Group>
-                                                <Form.Group controlId="exampleForm.ControlSelect1">
+                                                <Form.Group controlId="Question sublevel">
                                                     <Form.Label>Select Sub-Level</Form.Label>
                                                     <Form.Control as="select" onChange={(e) => { this.setState({ sublevelid: e.target.value }) }}>
                                                         <option value={this.state.sublevelid} selected>{this.state.subleveltitle}</option>
@@ -920,15 +1172,16 @@ class Questions extends React.Component {
                                                         }
                                                     </Form.Control>
                                                 </Form.Group>
-                                                <Form.Group controlId="exampleForm.ControlSelect1">
+                                                {/* <Form.Group controlId="exampleForm.ControlSelect1">
                                                     <Form.Label>Select pattern</Form.Label>
                                                     <Form.Control as="select" onChange={(e) => { this.setState({ patternid: e.target.value }) }}>
                                                         <option value={this.state.patternid} selected>{this.state.patterntitle}</option>
                                                         {this.state.pattern.length > 0 ?
-                                                            this.state.pattern.map(item => item.pattern_Id == this.state.patternid ? null : <option value={item.pattern_Id}>{item.Title}</option>) : null
+                                                            this.state.pattern.map(item => <option value={item.pattern_Id}>{item.Title}</option>) : null
+                                                            //this.state.pattern.map(item => item.pattern_Id == this.state.patternid ? null : <option value={item.pattern_Id}>{item.Title}</option>) : null
                                                         }
                                                     </Form.Control>
-                                                </Form.Group>
+                                                    </Form.Group>*/}
                                                 <Button variant="primary" onClick={this.submiteditquestion}>
                                                     Submit
                                                         </Button>
@@ -949,7 +1202,9 @@ class Questions extends React.Component {
                                 <Card>
                                     <Card.Header>
                                         <Card.Title as="h5">Option Details</Card.Title>
-                                        {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
+                                        </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                     </Card.Header>
                                     <Card.Body>
@@ -958,20 +1213,21 @@ class Questions extends React.Component {
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    <Form.Group controlId="optiondesc">
                                                         <Form.Label>Option Description</Form.Label>
                                                         <Form.Control as="textarea" rows="3" value={this.state.optiontitle} onChange={(e) => { this.setState({ optiontitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Option Title.
                                                         </Form.Text>
                                                     </Form.Group>
-                                                    {this.state.patternid == 3 || this.state.patternid == 4 ? <Form.Group controlId="exampleForm.ControlTextarea1">
-                                                        <Form.Label>Option Images</Form.Label>
-                                                        <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
-                                                        <Form.Text className="text-muted">
-                                                            Upload Files for this question.
+                                                    {this.state.option_fileupload_pattern.includes(this.state.patternid) ?
+                                                        <Form.Group controlId="option image">
+                                                            <Form.Label>Option Images</Form.Label>
+                                                            <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
+                                                            <Form.Text className="text-muted">
+                                                                Upload Files for this question.
                                                         </Form.Text>
-                                                    </Form.Group> : null}
+                                                        </Form.Group> : null}
 
                                                 </Form>
                                                 <Button variant="primary" onClick={this.editoptions}>
@@ -995,7 +1251,9 @@ class Questions extends React.Component {
                                 <Card>
                                     <Card.Header>
                                         <Card.Title as="h5">Hint Details</Card.Title>
-                                        {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <center><p> {String(this.state.validation_msg).length > 0 ? <p style={{ borderRadius: 5, padding: 10, backgroundColor: this.state.color, borderColor: "red", borderWidth: 10 }}>{this.state.validation_msg}</p> : null}
+                                            {/*String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null*/}
+                                        </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ choice: "showquestion" }) }} >List Questions</a></div>
                                     </Card.Header>
                                     <Card.Body>
@@ -1004,20 +1262,21 @@ class Questions extends React.Component {
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    <Form.Group controlId="edithintdesc">
                                                         <Form.Label>Hint Description</Form.Label>
                                                         <Form.Control as="textarea" rows="3" value={this.state.hinttitle} onChange={(e) => { this.setState({ hinttitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Hint Title.
                                                         </Form.Text>
                                                     </Form.Group>
-                                                    {this.state.patternid == 3 || this.state.patternid == 4 ? <Form.Group controlId="exampleForm.ControlTextarea1">
-                                                        <Form.Label>Question Images</Form.Label>
-                                                        <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
-                                                        <Form.Text className="text-muted">
-                                                            Upload Files for this question.
+                                                    {this.state.hint_fileupload_pattern.includes(this.state.patternid) ?
+                                                        <Form.Group controlId="edithintimage">
+                                                            <Form.Label>Hint Images</Form.Label>
+                                                            <Form.Control type="file" name="file" multiple accept="image/*" onChange={(e) => { this.setState({ file: e.target.files }) }} />
+                                                            <Form.Text className="text-muted">
+                                                                Upload Hint Files for this question.
                                                         </Form.Text>
-                                                    </Form.Group> : null}
+                                                        </Form.Group> : null}
 
                                                 </Form>
                                                 <Button variant="primary" onClick={this.edithint}>

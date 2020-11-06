@@ -33,7 +33,10 @@ class SignUp1 extends React.Component {
                 }
                 let result = await Login(params);
                 if (result.status) {
-                    this.props.history.push({ pathname: '/dashboard' })
+                    //this.props.history.push({ pathname: '/dashboard' })
+                    console.log('hstory =', (this.props));
+                    this.props.history.push({ pathname: '/Users' })
+
                 } else {
                     let message = result.message
                     /*if (result.validation) {

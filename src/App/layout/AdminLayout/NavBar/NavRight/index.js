@@ -8,15 +8,42 @@ import DEMO from "../../../../../store/constant";
 import Avatar1 from '../../../../../assets/images/user/avatar-1.jpg';
 import Avatar2 from '../../../../../assets/images/user/avatar-2.jpg';
 import Avatar3 from '../../../../../assets/images/user/avatar-3.jpg';
+import { Logout, Constants } from "../../../../../network/Apicall";
 
-class NavRight extends Component {
-    state = {
-        listOpen: false
-    };
+class NavRight extends React.Component {
+    constructor(props) {
+        super(props)
+        this.state = {
+            listOpen: false
+        };
+    }
+
 
     logout = async () => {
-        console.log("User Logged Out");
-        alert("user logged out");
+        try {
+            let del = window.confirm("Are you shure to logout  ");
+            if (del) {
+                let params = {
+                    type: "master",
+                    userid: Constants.user_profile.userid
+                }
+                let result = await Logout(params, '');
+                if (result.status) {
+                    alert(result.message);
+                    Constants.user_profile.userid = '';
+                    Constants.user_profile.login_status = '';
+                    Constants.user_profile.username = '';
+                    console.log('hstory =', (this.props));
+                    this.props.history.push({ pathname: '/auth/signin-1' });
+                } else {
+                    console.log('hstory =', (this.props));
+                    this.props.history.push({ pathname: '/auth/signin-1' });
+                    this.setState({ validation_msg: result.message, color: 'pink' });
+                }
+            }
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     render() {
@@ -92,16 +119,16 @@ class NavRight extends Component {
                             <Dropdown.Menu alignRight className="profile-notification">
                                 <div className="pro-head">
                                     <img src={Avatar1} className="img-radius" alt="User Profile" />
-                                    <span>John Doe</span>
+                                    <span>{Constants.user_profile.username}</span>
                                     <a href={DEMO.BLANK_LINK} className="dud-logout" title="Logout" onClick={this.logout}>
                                         <i className="feather icon-log-out" />
                                     </a>
                                 </div>
                                 <ul className="pro-body">
-                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-settings" /> Settings</a></li>
-                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-user" /> Profile</a></li>
-                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-mail" /> My Messages</a></li>
-                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-lock" /> Lock Screen</a></li>
+                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item" onClick={() => { this.props.history.push({ pathname: '/Profile' }) }}><i className="feather icon-user" /> Profile</a></li>
+                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item" onClick={() => { this.props.history.push({ pathname: '/Profile' }) }} ><i className="feather icon-settings" /> Settings</a></li>
+                                    {/*<li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-mail" /> My Messages</a></li>
+                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-lock" /> Lock Screen</a></li>*/}
                                 </ul>
                             </Dropdown.Menu>
                         </Dropdown>

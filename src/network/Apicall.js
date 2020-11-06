@@ -2,6 +2,9 @@
 import { Getdata, PostdataToken, GetdataToken, Postfile, Postdata, Postdatanew } from './WebServices';
 
 export let Constants = {
+  question_fileupload_pattern: [3, 4],
+  option_fileupload_pattern: [1, 4],
+  hint_fileupload_pattern: [1],
   user_profile: {
     login_status: false,
     token: '',
@@ -15,7 +18,7 @@ export let Constants = {
   lat: 0
 };
 
-let baseurl = 'http://115.124.127.245:3001/Mission_Onboarding/';
+let baseurl = 'http://115.124.127.245:3000/Mission_Onboarding/';
 export const Urls = {
   Login: baseurl + 'login', //User Login
   Logout: baseurl + 'logout', // logout
@@ -25,18 +28,21 @@ export const Urls = {
   SubLevel: baseurl + 'Sublevel',
   Question: baseurl + 'Questions',
   Option: baseurl + 'Options',
+  Answer: baseurl + 'Answer',
   hint: baseurl + 'Hint',
   Pattern: baseurl + 'Pattern',
+  GetfileIds: baseurl + 'Get_FileIds',
   Uploadfile: baseurl + 'uploadfile',
   DownloadFile: baseurl + 'get_file',
   UploadFiles: baseurl + 'upload_files',
+  UploadFile: baseurl + 'upload_file',
   Downloadzip: baseurl + 'get_files'
 };
 
 export async function Login(params) {
   try {
     let data = JSON.stringify(params);
-    console.log("url = " + Urls.UploadFiles);
+    console.log("url = " + Urls.Login);
     console.log("Params  = " + data);
     let result = await Postdatanew(Urls.Login, data);
     console.log("Response = ", (result));
@@ -67,6 +73,22 @@ export async function fileupload(params) {
   }
 }
 
+export async function singlefileupload(params) {
+  try {
+    //let data = JSON.stringify(params);
+
+    console.log("url = " + Urls.UploadFile);
+    console.log("Params  = ", (params));
+    let result = await Postfile(Urls.UploadFile, params);
+    console.log("Response = ", (result));
+    return result;
+  } catch (error) {
+    console.log(error);
+    return { status: false, message: 'Request cant be complete Try Again' };
+  }
+}
+
+
 export async function Logout() {
   try {
     console.log("url = " + Urls.Login);
@@ -96,9 +118,13 @@ export async function fetch(params, option) {
         break;
       case 'option': url = Urls.Option;
         break;
+      case 'answer': url = Urls.Answer;
+        break;
       case 'pattern': url = Urls.Pattern;
         break;
       case 'hint': url = Urls.hint;
+        break;
+      case 'fileid': url = Urls.GetfileIds;
         break;
       default: return { status: false, message: 'option cannot be Identified' }
     }
@@ -161,6 +187,8 @@ export async function adddata(params, option) {
       case 'question': url = Urls.Question;
         break;
       case 'option': url = Urls.Option;
+        break;
+      case 'answer': url = Urls.Answer;
         break;
       case 'pattern': url = Urls.Pattern;
         break;

@@ -30,17 +30,17 @@ const Employee = React.lazy(() => import('./Layout/User/Employee'));
 const Levels = React.lazy(() => import('./Layout/Master/Levels'));
 const SubLevels = React.lazy(() => import('./Layout/Master/SubLevel'));
 const Questions = React.lazy(() => import('./Layout/Master/Question'));
-const Hint = React.lazy(() => import('./Layout/Master/Hint'));
+const Profile = React.lazy(() => import('./Layout/Master/Profile'));
 const Pattern = React.lazy(() => import('./Layout/Master/Pattern'));
 
 const routes = [
-    { path: '/Pattern', exact: true, name: 'Bootstrap Table', component: Pattern },
-    { path: '/Hint', exact: true, name: 'Bootstrap Table', component: Hint },
-    { path: '/Questions', exact: true, name: 'Bootstrap Table', component: Questions },
-    { path: '/SubLevels', exact: true, name: 'Bootstrap Table', component: SubLevels },
-    { path: '/Levels', exact: true, name: 'Bootstrap Table', component: Levels },
-    { path: '/Employee', exact: true, name: 'Bootstrap Table', component: Employee },
-    { path: '/Users', exact: true, name: 'Bootstrap Table', component: Users },
+    { path: '/Pattern', exact: true, name: 'Pattern', component: Pattern },
+    { path: '/Profile', exact: true, name: 'Profile', component: Profile },
+    { path: '/Questions', exact: true, name: 'Questions', component: Questions },
+    { path: '/SubLevels', exact: true, name: 'sublevels', component: SubLevels },
+    { path: '/Levels', exact: true, name: 'Levels', component: Levels },
+    { path: '/Employee', exact: true, name: 'Employee', component: Employee },
+    { path: '/Users', exact: true, name: 'Users', component: Users },
     { path: '/dashboard', exact: true, name: 'Default', component: DashboardDefault },
     { path: '/button', exact: true, name: 'Basic Button', component: UIBasicButton },
     { path: '/badges', exact: true, name: 'Basic Badges', component: UIBasicBadges },
