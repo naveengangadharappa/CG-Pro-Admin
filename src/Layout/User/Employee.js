@@ -1,7 +1,8 @@
 import React from 'react';
+import Loader from "../../App/layout/Loader";
 import { Row, Col, Card, Table } from 'react-bootstrap';
 import { Form, Button, InputGroup, FormControl, DropdownButton, Dropdown } from 'react-bootstrap';
-
+//import NavBar from '../../App/layout/AdminLayout/NavBar';
 import Aux from "../../hoc/_Aux";
 import DEMO from "../../store/constant";
 
@@ -9,11 +10,16 @@ import avatar1 from '../../assets/images/user/avatar-1.jpg';
 import avatar2 from '../../assets/images/user/avatar-2.jpg';
 import avatar3 from '../../assets/images/user/avatar-3.jpg';
 import { fetch, Constants, adddata, deletedata } from "../../network/Apicall";
+import { validatedata } from '../../Validation/Validation';
 
 class Employee extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            pageno: 0,
+            showdetailview: false,
+            loading: false,
+            password: '',
             data: [],
             validation_msg: '',
             showdata: true,
@@ -26,6 +32,7 @@ class Employee extends React.Component {
             filter: '',
             searchdata: '',
             searchbox: true,
+            validation_err: {}
         }
     }
 
@@ -35,7 +42,9 @@ class Employee extends React.Component {
             let params = {
                 action: "fetchdata"
             }
+            this.setState({ loading: true });
             let result = await fetch(params, 'employee')
+            this.setState({ loading: false });
             if (result.status) {
                 this.setState({ data: result.data });
             } else {
@@ -55,7 +64,8 @@ class Employee extends React.Component {
                 filter: '',
                 employeeid: 0,
                 employeename: '',
-                employeedesignation: ''
+                employeedesignation: '',
+                pageno: this.state.pageno
             }
             switch (this.state.filter) {
                 case 'id': params.employeeid = this.state.searchdata;
@@ -72,11 +82,18 @@ class Employee extends React.Component {
                 default: params.filter = '';
             }
             // if (String(this.state.searchdata).length > 0) {
-            let result = await fetch(params, 'employee')
-            if (result.status) {
-                this.setState({ data: result.data, validation_msg: '' });
+            let validation_result = await validatedata(params, 'employee');
+            if (validation_result.status) {
+                this.setState({ loading: true });
+                let result = await fetch(params, 'employee')
+                this.setState({ loading: false });
+                if (result.status) {
+                    this.setState({ data: result.data, validation_msg: '' });
+                } else {
+                    this.setState({ validation_msg: result.message, color: 'darkred' })
+                }
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' })
+                this.setState({ validation_msg: validation_result.validation.employeeid[0] });
             }
             /* } else {
                  console.log("ëlse enterd")
@@ -98,13 +115,20 @@ class Employee extends React.Component {
                     action: "deletedata",
                     employeeid: data.Emp_Id
                 }
-                let result = await deletedata(params, 'employee');
-                if (result.status) {
-                    await this.loaddata();
-                    alert(result.message);
-                    this.setState({ validation_msg: result.message, color: 'darkgreen', showdata: true });
+                let validation_result = await validatedata(params, 'employee');
+                if (validation_result.status) {
+                    this.setState({ loading: true });
+                    let result = await deletedata(params, 'employee');
+                    this.setState({ loading: false });
+                    if (result.status) {
+                        await this.loaddata();
+                        alert(result.message);
+                        this.setState({ validation_msg: result.message, color: 'darkgreen', showdata: true });
+                    } else {
+                        this.setState({ validation_msg: result.message, color: 'darkred' });
+                    }
                 } else {
-                    this.setState({ validation_msg: result.message, color: 'darkred' });
+                    this.setState({ validation_msg: validation_result.validation.employeeid[0] });
                 }
             }
         } catch (err) {
@@ -121,19 +145,32 @@ class Employee extends React.Component {
                 employeeid: this.state.employeeid,
                 employeename: this.state.employeename,
                 employeedesignation: this.state.employeedesignation,
-                email: this.state.email
+                email: this.state.email,
+                password: this.state.password
             }
-            let result = await adddata(params, 'employee');
-            if (result.status) {
-                await this.loaddata();
-                alert(result.message);
-                this.setState({ validation_msg: result.message, color: 'darkgreen', showdata: true });
+            let validation_result = await validatedata(params, 'employee');
+            if (validation_result.status) {
+                this.setState({ loading: true });
+                let result = await adddata(params, 'employee');
+                this.setState({ loading: false });
+                if (result.status) {
+                    await this.loaddata();
+                    alert(result.message);
+                    this.setState({ validation_msg: result.message, color: 'darkgreen', showdata: true });
+                } else {
+                    this.setState({ validation_msg: result.message, color: 'darkred' });
+                }
             } else {
-                this.setState({ validation_msg: result.message, color: 'darkred' });
+                console.log(validation_result);
+                this.setState({ validation_err: validation_result.validation });
             }
         } catch (err) {
             console.log(err);
         }
+    }
+
+    loademployeedetails = async (item) => {
+        this.setState({ showdetailview: true });
     }
 
     displayfilter = async (option) => {
@@ -149,147 +186,207 @@ class Employee extends React.Component {
 
 
     render() {
-        if (this.state.showdata) {
-            let i = 0;
-            return (
-                <Aux>
-                    <Row>
-                        <Col>
-                            <Card className='Recent-Users'>
-                                <Card.Header>
-                                    <Card.Title as='h5'>Employees</Card.Title>
-                                    <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
-                                    </p></center>
-                                    <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: false, edit: false }) }} >Add Employee</a></div>
-                                    <div style={{ float: "right", paddingRight: 5, flexDirection: 'row', paddingRight: 10, paddingBottom: 5 }}>
-                                        <InputGroup  >
-                                            {this.state.searchbox ? <FormControl
-                                                placeholder="Search...."
-                                                aria-label="Recipient's employeename"
-                                                aria-describedby="basic-addon2"
-                                                name='search'
-                                                onChange={(e) => { this.setState({ searchdata: e.target.value }) }}
-                                            /> : null
-                                            }
-                                            <Dropdown as={InputGroup.Append}>
-                                                <Dropdown.Toggle split variant="secondary" id="dropdown-split-basic-2" />
-                                                <Button variant="secondary" onClick={this.loaddata}>Search</Button>
-                                                <Dropdown.Menu>
-                                                    <Dropdown.Item hred="#/action-1" onClick={() => { this.displayfilter('id') }}>Search by Id</Dropdown.Item>
-                                                    <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('name') }}>Search by Name</Dropdown.Item>
-                                                    <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('designation') }}>Search by Designation</Dropdown.Item>
-                                                </Dropdown.Menu>
-                                            </Dropdown>
-
-                                        </InputGroup>
-                                    </div>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Table responsive hover>
-                                        <thead>
-                                            <tr>
-                                                <th>Sl.no</th>
-                                                <th>Emp No</th>
-                                                <th>Employee Name</th>
-                                                <th>Email</th>
-                                                <th>Employee Designation</th>
-                                                <th>Last Active</th>
-                                                <th>Update/Delete</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {this.state.data.length > 0 ?
-                                                this.state.data.map(item =>
-                                                    <tr>
-                                                        <th scope="row">
-                                                            {i++}
-                                                            <img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />
-                                                        </th>
-                                                        <td>{item.Emp_Id}</td>
-                                                        <td>
-                                                            <h6 className="mb-1">{item.Emp_name}</h6>
-                                                        </td>
-                                                        <td>
-                                                            <h6 className="mb-1">{item.Emp_email}</h6>
-                                                        </td>
-                                                        <td>
-                                                            <h6 className="mb-1">{item.Emp_designation}</h6>
-                                                        </td>
-                                                        <td>
-                                                            <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_time}</h6>
-                                                        </td>
-                                                        <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ employeeid: item.Emp_Id, employeename: item.Emp_name, email: item.Emp_email, employeedesignation: item.Emp_designation, showdata: false, edit: true }) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
-                                                    </tr>
-                                                ) : null}
-                                        </tbody>
-                                    </Table>
-                                </Card.Body>
-                            </Card>
-
-                        </Col>
-                    </Row>
-                </Aux>
-            );
+        if (this.state.loading) {
+            return (<Loader />)
         } else {
-            return (
-                <Aux>
-                    <Row>
-                        <Col>
-                            <Card>
-                                <Card.Header>
-                                    <Card.Title as="h5">Employee Details</Card.Title>
-                                    {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
-                                    <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List Master Users</a></div>
+            if (this.state.showdata) {
+                let i = 1;
+                if (this.state.showdetailview) {
+                    return (
+                        <Aux>
+                            <Row>
+                                <Col>
+                                    <Card className='Recent-Users'>
+                                        <Card.Header>
+                                            <Card.Title as='h5'>Employees Details</Card.Title>
+                                            <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                            </p></center>
+                                            <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdetailview: false }) }} >Employee List</a></div>
+                                        </Card.Header>
+                                        <Card.Body>
 
-                                </Card.Header>
-                                <Card.Body>
-                                    <h5>Enter New Employee Details</h5>
-                                    <hr />
-                                    <Row>
-                                        <Col md={6}>
-                                            <Form>
-                                                <Form.Group controlId="EmployeeID">
-                                                    <Form.Label>Employee ID</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter Employee Id" value={this.state.employeeid} onChange={(e) => { this.setState({ employeeid: e.target.value }) }} />
-                                                    <Form.Text className="text-muted">
-                                                        Enter Employee  Id.
-                                                </Form.Text>
-                                                </Form.Group>
-                                                <Form.Group controlId="EmployeeName">
-                                                    <Form.Label>Employee Name</Form.Label>
-                                                    <Form.Control type="text" placeholder="Enter Employee Name" value={this.state.employeename} onChange={(e) => { this.setState({ employeename: e.target.value }) }} />
-                                                    <Form.Text className="text-muted">
-                                                        Enter User Name.
-                                                </Form.Text>
-                                                </Form.Group>
-                                                <Form.Group controlId="formBasicEmail">
-                                                    <Form.Label>Employee Email</Form.Label>
-                                                    <Form.Control type="email" placeholder="Enter Employee Offical Email " value={this.state.email} onChange={(e) => { this.setState({ email: e.target.value }) }} />
-                                                    <Form.Text className="text-muted">
-                                                        Enter User Offical Email Address.
-                                                </Form.Text>
-                                                </Form.Group>
-                                                <Form.Group controlId="Employeedesignation">
-                                                    <Form.Label>Employee designation</Form.Label>
-                                                    <Form.Control type="ext" placeholder="Enter User Offical Email " value={this.state.employeedesignation} onChange={(e) => { this.setState({ employeedesignation: e.target.value }) }} />
-                                                    <Form.Text className="text-muted">
-                                                        Enter Employee designation.
-                                                </Form.Text>
-                                                </Form.Group>
+                                        </Card.Body>
+                                        <Card.Footer>
+                                            <div style={{ float: "right" }}>
+                                                {this.state.pageno >= 1 ? <Button variant="primary" onClick={this.loaddata}>{'<-'}</Button> : null}
+                                                <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button>
+                                                <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
+                                            </div>
+                                        </Card.Footer>
+                                    </Card>
 
-                                            </Form>
-                                            <Button variant="primary" onClick={this.submit}>
-                                                Submit
+                                </Col>
+                            </Row>
+                        </Aux>
+                    );
+                } else {
+                    return (
+                        <Aux>
+                            <Row>
+                                <Col>
+                                    <Card className='Recent-Users'>
+                                        <Card.Header>
+                                            <Card.Title as='h5'>Employees</Card.Title>
+                                            <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                            </p></center>
+                                            <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: false, edit: false }) }} >Add Employee</a></div>
+                                            <div style={{ float: "right", paddingRight: 5, flexDirection: 'row', paddingRight: 10, paddingBottom: 5 }}>
+                                                <InputGroup  >
+                                                    {this.state.searchbox ? <FormControl
+                                                        placeholder="Search...."
+                                                        aria-label="Recipient's employeename"
+                                                        aria-describedby="basic-addon2"
+                                                        name='search'
+                                                        onChange={(e) => { this.setState({ searchdata: e.target.value }) }}
+                                                    /> : null
+                                                    }
+                                                    <Dropdown as={InputGroup.Append}>
+                                                        <Dropdown.Toggle split variant="secondary" id="dropdown-split-basic-2" />
+                                                        <Button variant="secondary" onClick={this.loaddata}>Search</Button>
+                                                        <Dropdown.Menu>
+                                                            <Dropdown.Item hred="#/action-1" onClick={() => { this.displayfilter('id') }}>Search by Id</Dropdown.Item>
+                                                            <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('name') }}>Search by Name</Dropdown.Item>
+                                                            <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('designation') }}>Search by Designation</Dropdown.Item>
+                                                        </Dropdown.Menu>
+                                                    </Dropdown>
+
+                                                </InputGroup>
+                                                <p><b>Filter : </b> {this.state.filter ? <b>Search By {this.state.filter}</b> : null}</p>
+                                            </div>
+                                        </Card.Header>
+                                        <Card.Body>
+                                            <Table responsive hover>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Sl.no</th>
+                                                        <th>Emp No</th>
+                                                        <th>Employee Name</th>
+                                                        <th>Email</th>
+                                                        <th>Employee Designation</th>
+                                                        <th>Last Active</th>
+                                                        <th>Update/Delete</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {this.state.data.length > 0 ?
+                                                        this.state.data.map(item =>
+                                                            <tr>
+                                                                <th scope="row">
+                                                                    {i++}
+                                                                    <img className="rounded-circle" style={{ width: '40px' }} src={avatar2} alt="activity-user" />
+                                                                </th>
+                                                                <td>{item.Emp_Id}</td>
+                                                                <td>
+                                                                    <h6 className="mb-1">{item.Emp_name}</h6>
+                                                                </td>
+                                                                <td>
+                                                                    <h6 className="mb-1">{item.Emp_email}</h6>
+                                                                </td>
+                                                                <td>
+                                                                    <h6 className="mb-1">{item.Emp_designation}</h6>
+                                                                </td>
+                                                                <td>
+                                                                    <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_time}</h6>
+                                                                </td>
+                                                                <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ employeeid: item.Emp_Id, employeename: item.Emp_name, email: item.Emp_email, employeedesignation: item.Emp_designation, showdata: false, edit: true }) }}>Edit</a>
+                                                                    <a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.loademployeedetails(item) }}>View Details</a>
+                                                                    <a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
+                                                            </tr>
+                                                        ) : null}
+                                                </tbody>
+                                            </Table>
+                                        </Card.Body>
+                                        <Card.Footer>
+                                            <div style={{ float: "right" }}>
+                                                {this.state.pageno >= 1 ? <Button variant="primary" onClick={this.loaddata}>{'<-'}</Button> : null}
+                                                <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button>
+                                                <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
+                                            </div>
+                                        </Card.Footer>
+                                    </Card>
+
+                                </Col>
+                            </Row>
+                        </Aux>
+                    );
+                }
+            } else {
+                return (
+                    <Aux>
+                        <Row>
+                            <Col>
+                                <Card>
+                                    <Card.Header>
+                                        <Card.Title as="h5">Employee Details</Card.Title>
+                                        {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
+                                        <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List Master Users</a></div>
+
+                                    </Card.Header>
+                                    <Card.Body>
+                                        <h5>Enter New Employee Details</h5>
+                                        <hr />
+                                        <Row>
+                                            <Col md={6}>
+                                                <Form>
+                                                    <Form.Group controlId="EmployeeID">
+                                                        <Form.Label>Employee ID</Form.Label>
+                                                        <Form.Control type="text" placeholder="Enter Employee Id" value={this.state.employeeid} onChange={(e) => { this.setState({ employeeid: e.target.value }) }} />
+                                                        <Form.Text className="text-muted">
+                                                            Enter Employee  Id.
+                                                </Form.Text>
+                                                        {this.state.validation_err.employeeid ? <p style={{ color: "darkred" }}>{this.state.validation_err.employeeid[0]}</p> : null}
+
+                                                    </Form.Group>
+                                                    <Form.Group controlId="EmployeeName">
+                                                        <Form.Label>Employee Name</Form.Label>
+                                                        <Form.Control type="text" placeholder="Enter Employee Name" value={this.state.employeename} onChange={(e) => { this.setState({ employeename: e.target.value }) }} />
+                                                        <Form.Text className="text-muted">
+                                                            Enter User Name.
+                                                </Form.Text>
+                                                        {this.state.validation_err.employeename ? <p style={{ color: "darkred" }}>{this.state.validation_err.employeename[0]}</p> : null}
+
+                                                    </Form.Group>
+                                                    <Form.Group controlId="formBasicEmail">
+                                                        <Form.Label>Employee Email</Form.Label>
+                                                        <Form.Control type="email" placeholder="Enter Employee Offical Email " value={this.state.email} onChange={(e) => { this.setState({ email: e.target.value }) }} />
+                                                        <Form.Text className="text-muted">
+                                                            Enter User Offical Email Address.
+                                                </Form.Text>
+                                                        {this.state.validation_err.email ? <p style={{ color: "darkred" }}>{this.state.validation_err.email[0]}</p> : null}
+
+                                                    </Form.Group>
+                                                    <Form.Group controlId="Employeedesignation">
+                                                        <Form.Label>Employee designation</Form.Label>
+                                                        <Form.Control type="ext" placeholder="Enter User Offical Email " value={this.state.employeedesignation} onChange={(e) => { this.setState({ employeedesignation: e.target.value }) }} />
+                                                        <Form.Text className="text-muted">
+                                                            Enter Employee designation.
+                                                </Form.Text>
+                                                        {this.state.validation_err.employeedesignation ? <p style={{ color: "darkred" }}>{this.state.validation_err.employeedesignation[0]}</p> : null}
+
+                                                    </Form.Group>
+                                                    <Form.Group controlId="formpassword">
+                                                        <Form.Label>User Password</Form.Label>
+                                                        <Form.Control type="password" placeholder="" value={this.state.password} onChange={(e) => { this.setState({ password: e.target.value }) }} />
+                                                        <Form.Text className="text-muted">
+                                                            Enter Temperory password for this Master User.
+                                                    </Form.Text>
+                                                        {this.state.validation_err.password ? <p style={{ color: "darkred" }}>{this.state.validation_err.password[0]}</p> : null}
+                                                    </Form.Group>
+
+                                                </Form>
+                                                <Button variant="primary" onClick={this.submit}>
+                                                    Submit
                                         </Button>
-                                        </Col>
+                                            </Col>
 
-                                    </Row>
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    </Row>
-                </Aux>
-            );
+                                        </Row>
+                                    </Card.Body>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </Aux>
+                );
+            }
         }
     }
 }

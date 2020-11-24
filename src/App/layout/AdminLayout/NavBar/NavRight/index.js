@@ -1,44 +1,64 @@
 import React, { Component } from 'react';
 import { Dropdown } from 'react-bootstrap';
-
+import { Route, Switch, Redirect } from 'react-router-dom';
 import ChatList from './ChatList';
 import Aux from "../../../../../hoc/_Aux";
 import DEMO from "../../../../../store/constant";
+//import routes from "../../../../../routes";
 
 import Avatar1 from '../../../../../assets/images/user/avatar-1.jpg';
 import Avatar2 from '../../../../../assets/images/user/avatar-2.jpg';
 import Avatar3 from '../../../../../assets/images/user/avatar-3.jpg';
-import { Logout, Constants } from "../../../../../network/Apicall";
+import { Logout, Constants, Offlinestorage } from "../../../../../network/Apicall";
 
 class NavRight extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
-            listOpen: false
+            listOpen: false,
+            username: Constants.user_profile.username,
+            userid: '',
         };
     }
 
+    componentDidMount = async () => {
+        try {
+            let offline_result = await Offlinestorage({ choice: 'getdata', key: 'userprofile' });
+            if (offline_result.status) {
+                Constants.user_profile.userid = offline_result.data.userid;
+                Constants.user_profile.username = offline_result.data.username;
+                Constants.user_profile.email = offline_result.data.email;
+                Constants.user_profile.login_status = offline_result.data.login_status;
+                this.setState({ username: offline_result.data.username, userid: offline_result.data.userid })
+            }
+        } catch (err) {
+            console.log(err);
+        }
+
+    }
 
     logout = async () => {
         try {
-            let del = window.confirm("Are you shure to logout  ");
-            if (del) {
+            let confirm = window.confirm("Are you shure to logout  ");
+            if (confirm) {
                 let params = {
                     type: "master",
                     userid: Constants.user_profile.userid
                 }
-                let result = await Logout(params, '');
+                let result = await Logout(params);
                 if (result.status) {
                     alert(result.message);
                     Constants.user_profile.userid = '';
                     Constants.user_profile.login_status = '';
                     Constants.user_profile.username = '';
-                    console.log('hstory =', (this.props));
-                    this.props.history.push({ pathname: '/auth/signin-1' });
+                    let offline_result = await Offlinestorage({ choice: 'clear' });
+                    if (offline_result.status) {
+                        console.log("DB Cleared Successfully");
+                        this.props.history.push({ pathname: '/auth/signin-1' });
+                    }
                 } else {
-                    console.log('hstory =', (this.props));
-                    this.props.history.push({ pathname: '/auth/signin-1' });
-                    this.setState({ validation_msg: result.message, color: 'pink' });
+                    //this.props.history.push({ pathname: '/auth/signin-1' });
+                    alert("Logout Unsuccessful " + result.message);
                 }
             }
         } catch (err) {
@@ -47,6 +67,19 @@ class NavRight extends React.Component {
     }
 
     render() {
+
+        /*const menu = routes.map((route, index) => {
+            return (route.component) ? (
+                <Route
+                    key={index}
+                    path={route.path}
+                    exact={route.exact}
+                    name={route.name}
+                    render={props => (
+                        <route.component {...props} />
+                    )} />
+            ) : (null);
+        });*/
 
         return (
             <Aux>
@@ -112,22 +145,24 @@ class NavRight extends React.Component {
                         <a href={DEMO.BLANK_LINK} className="displayChatbox" onClick={() => { this.setState({ listOpen: true }); }}><i className="icon feather icon-mail" /></a>
                     </li>*/}
                     <li>
-                        <Dropdown alignRight={!this.props.rtlLayout} className="drp-user">
+                        {/*<Dropdown alignRight={!this.props.rtlLayout} className="drp-user">*/}
+                        <Dropdown alignRight={!false} className="drp-user">
                             <Dropdown.Toggle variant={'link'} id="dropdown-basic">
                                 <i className="icon feather icon-settings" />
                             </Dropdown.Toggle>
                             <Dropdown.Menu alignRight className="profile-notification">
                                 <div className="pro-head">
                                     <img src={Avatar1} className="img-radius" alt="User Profile" />
-                                    <span>{Constants.user_profile.username}</span>
+                                    <span>{this.state.username}</span>
                                     <a href={DEMO.BLANK_LINK} className="dud-logout" title="Logout" onClick={this.logout}>
                                         <i className="feather icon-log-out" />
                                     </a>
                                 </div>
                                 <ul className="pro-body">
-                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item" onClick={() => { this.props.history.push({ pathname: '/Profile' }) }}><i className="feather icon-user" /> Profile</a></li>
-                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item" onClick={() => { this.props.history.push({ pathname: '/Profile' }) }} ><i className="feather icon-settings" /> Settings</a></li>
-                                    {/*<li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-mail" /> My Messages</a></li>
+                                    <li><a href={DEMO.BLANK_LINK} className="dropdown-item" onClick={() => { this.props.history.push({ pathname: '/Profile', state: 'profile' }) }}><i className="feather icon-user" /> Profile</a></li>
+                                    {/*<li><a href={DEMO.BLANK_LINK} className="dropdown-item" onClick={() => { this.props.history.push({ pathname: '/Profile', state: 'updatepassword' }) }} ><i className="feather icon-settings" /> Update Password</a></li>
+                                    *<li><a href={DEMO.BLANK_LINK} className="dropdown-item" onClick={() => { this.props.history.push({ pathname: '/Profile' }) }} ><i className="feather icon-settings" /> Settings</a></li>
+                                   <li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-mail" /> My Messages</a></li>
                                     <li><a href={DEMO.BLANK_LINK} className="dropdown-item"><i className="feather icon-lock" /> Lock Screen</a></li>*/}
                                 </ul>
                             </Dropdown.Menu>

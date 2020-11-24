@@ -1,7 +1,6 @@
 import React, { Component, Suspense } from 'react';
 import { Switch, Route } from 'react-router-dom';
 import Loadable from 'react-loadable';
-import { Constants } from '../network/Apicall';
 
 import '../../node_modules/font-awesome/scss/font-awesome.scss';
 
@@ -9,7 +8,7 @@ import Loader from './layout/Loader'
 import Aux from "../hoc/_Aux";
 import ScrollToTop from './layout/ScrollToTop';
 import routes from "../route";
-import newroutes from "../routes";
+//import routes from "../routes";
 
 const AdminLayout = Loadable({
     loader: () => import('./layout/AdminLayout'),
@@ -20,11 +19,6 @@ const AdminLayout = Loadable({
 class App extends Component {
     constructor(props) {
         super(props);
-    }
-
-    componentDidMount() {
-        Constants.user_profile.login_status = true;
-        console.log("entered to App componentDid mount ");
     }
 
     render() {
@@ -64,6 +58,17 @@ class App extends Component {
                     </Suspense>
                 </ScrollToTop>
             </Aux>
+            /*<Route render={(props) =>
+                <ScrollToTop>
+                    <Suspense fallback={<Loader />}>
+                        <Switch>
+                            {menu}
+                            <Route exact name="index" path="/" component={AdminLayout} />
+                        </Switch>
+                    </Suspense>
+                </ScrollToTop>
+            }
+            />*/
         );
     }
 }

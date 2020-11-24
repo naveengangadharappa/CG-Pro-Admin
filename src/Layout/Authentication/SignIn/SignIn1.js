@@ -4,7 +4,8 @@ import { NavLink } from 'react-router-dom';
 import './../../../assets/scss/style.scss';
 import Aux from "../../../hoc/_Aux";
 import Breadcrumb from "../../../App/layout/AdminLayout/Breadcrumb";
-import { Login } from "../../../network/Apicall";
+import { Login, Offlinestorage } from "../../../network/Apicall";
+import disableBrowserBackButton from 'disable-browser-back-navigation';
 
 class SignUp1 extends React.Component {
     constructor(props) {
@@ -16,39 +17,51 @@ class SignUp1 extends React.Component {
             validation_empid: "",
             validation_password: "",
             loading: false,
+
         }
         this.submit = this.submit.bind(this);
     }
 
+    componentDidMount = () => {
+        disableBrowserBackButton();
+    }
 
     submit = async () => {
-        if (String(this.state.empid).length > 0 && String(this.state.password).length > 0) {
-            if (String(this.state.password).length < 8) {
-                this.setState({ validation_msg: "Password should br greater then 8 Characters" });
-            } else {
-                let params = {
-                    type: "master",  // type=”employee” for employee login
-                    userid: this.state.empid,
-                    password: this.state.password
-                }
-                let result = await Login(params);
-                if (result.status) {
-                    //this.props.history.push({ pathname: '/dashboard' })
-                    console.log('hstory =', (this.props));
-                    this.props.history.push({ pathname: '/Users' })
-
+        try {
+            disableBrowserBackButton();
+            if (String(this.state.empid).length > 0 && String(this.state.password).length > 0) {
+                if (String(this.state.password).length < 8) {
+                    this.setState({ validation_msg: "Password should br greater then 8 Characters" });
                 } else {
-                    let message = result.message
-                    /*if (result.validation) {
-                        console.log("entered validation");
-                        let validation = result.validation.errors;
-                        let message = (validation.userid)
-                    }*/
-                    this.setState({ validation_msg: message });
+                    let params = {
+                        type: "master",  // type=”employee” for employee login
+                        userid: this.state.empid,
+                        password: this.state.password
+                    }
+                    let result = await Login(params);
+                    if (result.status) {
+                        //this.props.history.push({ pathname: '/dashboard' })
+                        let storageresult = await Offlinestorage({ choice: 'adddata', key: 'userprofile', value: { login_status: true, userid: result.data.Id, username: result.data.name, email: result.data.email } });
+                        console.log("offline result =", (storageresult));
+                        if (storageresult.status) {
+                            console.log("navigtion to user")
+                            this.props.history.push({ pathname: '/Users' })
+                        }
+                    } else {
+                        let message = result.message
+                        /*if (result.validation) {
+                            console.log("entered validation");
+                            let validation = result.validation.errors;
+                            let message = (validation.userid)
+                        }*/
+                        this.setState({ validation_msg: message });
+                    }
                 }
+            } else {
+                this.setState({ validation_msg: "EmployeeId and Password Required" });
             }
-        } else {
-            this.setState({ validation_msg: "EmployeeId and Password Required" });
+        } catch (err) {
+            console.log(err);
         }
     }
 

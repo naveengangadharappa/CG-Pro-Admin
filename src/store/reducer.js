@@ -67,8 +67,8 @@ const reducer = (state = initialState, action) => {
                     isTrigger: trigger,
                 };
             }
-            return {...state};
-        case actionTypes.FULL_SCREEN :
+            return { ...state };
+        case actionTypes.FULL_SCREEN:
             return {
                 ...state,
                 isFullScreen: !state.isFullScreen
@@ -79,6 +79,11 @@ const reducer = (state = initialState, action) => {
                 isFullScreen: false
             };
         case actionTypes.CHANGE_LAYOUT:
+            return {
+                ...state,
+                layout: action.layout
+            };
+        case actionTypes.USER_DETAILS:
             return {
                 ...state,
                 layout: action.layout

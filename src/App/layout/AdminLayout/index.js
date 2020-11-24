@@ -12,10 +12,19 @@ import routes from "../../../routes";
 import Aux from "../../../hoc/_Aux";
 import * as actionTypes from "../../../store/actions";
 import { Constants } from '../../../network/Apicall';
+import ProtectedRoute from "react-protected-route";
 
 import './app.scss';
 
 class AdminLayout extends Component {
+
+    constructor(props) {
+        super(props)
+    }
+
+    componentDidMount = () => {
+        console.log("login ststus =" + Constants.user_profile.login_status)
+    }
 
     fullScreenExitHandler = () => {
         if (!document.fullscreenElement && !document.webkitIsFullScreen && !document.mozFullScreen && !document.msFullscreenElement) {
@@ -51,9 +60,19 @@ class AdminLayout extends Component {
         document.addEventListener('webkitfullscreenchange', this.fullScreenExitHandler);
         document.addEventListener('mozfullscreenchange', this.fullScreenExitHandler);
         document.addEventListener('MSFullscreenChange', this.fullScreenExitHandler);
-
         const menu = routes.map((route, index) => {
             return (route.component) ? (
+                /*<ProtectedRoute
+                    key={index}
+                    isAuthenticated={Constants.user_profile.login_status}
+                    redirectTo="/auth/signin-1"
+                    path={route.path}
+                    exact={route.exact}
+                    component={props => (
+                        <route.component {...props} />
+                    )
+                    }
+                />*/
                 <Route
                     key={index}
                     path={route.path}
@@ -69,9 +88,9 @@ class AdminLayout extends Component {
             <Aux>
                 <Fullscreen enabled={this.props.isFullScreen}>
                     <Navigation />
-                    <NavBar />
+                    <NavBar {...this.props} />
                     <div className="pcoded-main-container" onClick={() => this.mobileOutClickHandler}>
-                        <div className="pcoded-wrapper">
+                        {/*<div className="pcoded-wrapper">
                             <div className="pcoded-content">
                                 <div className="pcoded-inner-content">
                                     <Breadcrumb />
@@ -87,7 +106,13 @@ class AdminLayout extends Component {
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div>*/}
+                        <Suspense fallback={<Loader />}>
+                            <Switch>
+                                {menu}
+                                <Redirect from="/" to={this.props.defaultPath} />
+                            </Switch>
+                        </Suspense>
                     </div>
                 </Fullscreen>
             </Aux>
@@ -102,7 +127,7 @@ const mapStateToProps = state => {
         isFullScreen: state.isFullScreen,
         collapseMenu: state.collapseMenu,
         configBlock: state.configBlock,
-        layout: state.layout
+        layout: state.layout,
     }
 };
 

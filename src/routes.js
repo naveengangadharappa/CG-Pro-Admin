@@ -6,6 +6,8 @@ window.$ = $;
 global.jQuery = $;
 
 const DashboardDefault = React.lazy(() => import('./Demo/Dashboard/Default'));
+//const DashboardDefault = React.lazy(() => import('./App/layout/AdminLayout/index'));
+
 
 const UIBasicButton = React.lazy(() => import('./Demo/UIElements/Basic/Button'));
 const UIBasicBadges = React.lazy(() => import('./Demo/UIElements/Basic/Badges'));
@@ -32,8 +34,14 @@ const SubLevels = React.lazy(() => import('./Layout/Master/SubLevel'));
 const Questions = React.lazy(() => import('./Layout/Master/Question'));
 const Profile = React.lazy(() => import('./Layout/Master/Profile'));
 const Pattern = React.lazy(() => import('./Layout/Master/Pattern'));
+const ViewDetails = React.lazy(() => import('./Layout/User/ViewDetails'));
+
+//const SignUp1 = React.lazy(() => import('./Layout/Authentication/SignUp/SignUp1'));
+//const Signin1 = React.lazy(() => import('./Layout/Authentication/SignIn/SignIn1'));
+
 
 const routes = [
+    { path: '/ViewDetails', exact: true, name: 'ViewDetails', component: ViewDetails },
     { path: '/Pattern', exact: true, name: 'Pattern', component: Pattern },
     { path: '/Profile', exact: true, name: 'Profile', component: Profile },
     { path: '/Questions', exact: true, name: 'Questions', component: Questions },
@@ -54,6 +62,9 @@ const routes = [
     { path: '/maps/google-map', exact: true, name: 'Google Map', component: GoogleMap },
     { path: '/sample-page', exact: true, name: 'Sample Page', component: OtherSamplePage },
     { path: '/docs', exact: true, name: 'Documentation', component: OtherDocs },
+    //{ path: '/auth/signup-1', exact: true, name: 'Signup 1', component: SignUp1 },
+    //{ path: '/auth/signin-1', exact: true, name: 'Signin 1', component: Signin1 }
+
 ];
 
 export default routes;

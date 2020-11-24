@@ -2,7 +2,7 @@ import React from 'react';
 import Loader from "../../App/layout/Loader";
 import { Row, Col, Card, Table } from 'react-bootstrap';
 import { Form, Button, InputGroup, FormControl, DropdownButton, Dropdown } from 'react-bootstrap';
-
+//import NavBar from '../../App/layout/AdminLayout/NavBar';
 import Aux from "../../hoc/_Aux";
 import DEMO from "../../store/constant";
 
@@ -12,38 +12,45 @@ import avatar3 from '../../assets/images/user/avatar-3.jpg';
 import { fetch, Constants, adddata, deletedata } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
 
-class Users extends React.Component {
+class ViewDetails extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             pageno: 0,
             loading: false,
+            password: '',
             data: [],
             validation_msg: '',
             showdata: true,
             edit: false,
-            userid: '',
-            username: '',
+            employeeid: Constants.employeeid,
+            employeename: '',
+            employeedesignation: '',
             email: '',
             color: 'darkred',
             filter: '',
             searchdata: '',
             searchbox: true,
-            password: '',
-            validation_err: {}
+            validation_err: {},
+            employeedetails: {},
         }
     }
 
     async componentDidMount() {
         try {
-            console.log("this.props.history =", (this.props.history))
-            Constants.currentscreen = 'master';
+            console.log("props =", this.props.location.state);
+            let emp_details = this.props.location.state;
+            console.log("employee details = ", emp_details)
+            this.setState({ employeedetails: emp_details });
+            console.log("employee detais state = ", this.state.employeedetails);
+            Constants.currentscreen = 'employee';
             let params = {
-                action: "fetchdata"
+                action: "getprofile",
+                employeeid: emp_details.Emp_Id
             }
-            this.setState({ loading: true })
-            let result = await fetch(params, 'master')
-            this.setState({ loading: false })
+            this.setState({ loading: true });
+            let result = await fetch(params, 'employee')
+            this.setState({ loading: false });
             if (result.status) {
                 this.setState({ data: result.data });
             } else {
@@ -52,8 +59,8 @@ class Users extends React.Component {
         } catch (err) {
             console.log(err)
         }
-
     }
+
 
     loaddata = async () => {
         try {
@@ -61,24 +68,30 @@ class Users extends React.Component {
             let params = {
                 action: 'fetchdata',
                 filter: '',
-                userid: 0,
-                username: '',
+                employeeid: 0,
+                employeename: '',
+                employeedesignation: '',
+                pageno: this.state.pageno
             }
             switch (this.state.filter) {
-                case 'id': params.userid = this.state.searchdata;
+                case 'id': params.employeeid = this.state.searchdata;
                     params.filter = 'id';
                     break;
                 case 'name':
-                    params.username = this.state.searchdata;
+                    params.employeename = this.state.searchdata;
                     params.filter = 'title';
+                    break;
+                case 'designation':
+                    params.employeedesignation = this.state.searchdata;
+                    params.filter = 'designation';
                     break;
                 default: params.filter = '';
             }
             // if (String(this.state.searchdata).length > 0) {
-            let validation_result = await validatedata(params, 'master');
+            let validation_result = await validatedata(params, 'employee');
             if (validation_result.status) {
                 this.setState({ loading: true });
-                let result = await fetch(params, 'master')
+                let result = await fetch(params, 'employee')
                 this.setState({ loading: false });
                 if (result.status) {
                     this.setState({ data: result.data, validation_msg: '' });
@@ -86,7 +99,7 @@ class Users extends React.Component {
                     this.setState({ validation_msg: result.message, color: 'darkred' })
                 }
             } else {
-                this.setState({ validation_msg: validation_result.validation.username[0] });
+                this.setState({ validation_msg: validation_result.validation.employeeid[0] });
             }
             /* } else {
                  console.log("ëlse enterd")
@@ -102,18 +115,17 @@ class Users extends React.Component {
 
     deletedata = async (data) => {
         try {
-            let del = window.confirm("Do you want to proceed with deleting this Master ");
+            let del = window.confirm("Do you want to proceed with deleting this Employee ");
             if (del) {
-                console.log("state  = ", (this.state));
                 let params = {
                     action: "deletedata",
-                    userid: data.User_Id
+                    employeeid: data.Emp_Id
                 }
-                let validation_result = await validatedata(params, 'master');
+                let validation_result = await validatedata(params, 'employee');
                 if (validation_result.status) {
-                    this.setState({ loading: true })
-                    let result = await deletedata(params, 'master');
-                    this.setState({ loading: false })
+                    this.setState({ loading: true });
+                    let result = await deletedata(params, 'employee');
+                    this.setState({ loading: false });
                     if (result.status) {
                         await this.loaddata();
                         alert(result.message);
@@ -122,7 +134,7 @@ class Users extends React.Component {
                         this.setState({ validation_msg: result.message, color: 'darkred' });
                     }
                 } else {
-                    this.setState({ validation_msg: validation_result.validation.userid[0] });
+                    this.setState({ validation_msg: validation_result.validation.employeeid[0] });
                 }
             }
         } catch (err) {
@@ -136,16 +148,17 @@ class Users extends React.Component {
             console.log("state  = ", (this.state));
             let params = {
                 action: this.state.edit ? "updatedata" : "adddata",
-                userid: this.state.userid,
-                username: this.state.username,
+                employeeid: this.state.employeeid,
+                employeename: this.state.employeename,
+                employeedesignation: this.state.employeedesignation,
                 email: this.state.email,
                 password: this.state.password
             }
-            let validation_result = await validatedata(params, 'master');
+            let validation_result = await validatedata(params, 'employee');
             if (validation_result.status) {
-                this.setState({ loading: true })
-                let result = await adddata(params, 'master');
-                this.setState({ loading: false })
+                this.setState({ loading: true });
+                let result = await adddata(params, 'employee');
+                this.setState({ loading: false });
                 if (result.status) {
                     await this.loaddata();
                     alert(result.message);
@@ -154,6 +167,7 @@ class Users extends React.Component {
                     this.setState({ validation_msg: result.message, color: 'darkred' });
                 }
             } else {
+                console.log(validation_result);
                 this.setState({ validation_err: validation_result.validation });
             }
         } catch (err) {
@@ -167,8 +181,11 @@ class Users extends React.Component {
                 break;
             case 'name': this.setState({ filter: 'name', searchbox: true });
                 break;
+            case 'designation': this.setState({ filter: 'designation', searchbox: true });
+                break;
         }
     }
+
 
     render() {
         if (this.state.loading) {
@@ -182,15 +199,15 @@ class Users extends React.Component {
                             <Col>
                                 <Card className='Recent-Users'>
                                     <Card.Header>
-                                        <Card.Title as='h5'>Recent Users </Card.Title>
+                                        <Card.Title as='h5'>Employees</Card.Title>
                                         <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
                                         </p></center>
-                                        <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: false, edit: false }) }} >Add Master User</a></div>
+                                        <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: false, edit: false }) }} >Add Employee</a></div>
                                         <div style={{ float: "right", paddingRight: 5, flexDirection: 'row', paddingRight: 10, paddingBottom: 5 }}>
                                             <InputGroup  >
                                                 {this.state.searchbox ? <FormControl
                                                     placeholder="Search...."
-                                                    aria-label="Recipient's username"
+                                                    aria-label="Recipient's employeename"
                                                     aria-describedby="basic-addon2"
                                                     name='search'
                                                     onChange={(e) => { this.setState({ searchdata: e.target.value }) }}
@@ -202,6 +219,7 @@ class Users extends React.Component {
                                                     <Dropdown.Menu>
                                                         <Dropdown.Item hred="#/action-1" onClick={() => { this.displayfilter('id') }}>Search by Id</Dropdown.Item>
                                                         <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('name') }}>Search by Name</Dropdown.Item>
+                                                        <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('designation') }}>Search by Designation</Dropdown.Item>
                                                     </Dropdown.Menu>
                                                 </Dropdown>
 
@@ -215,10 +233,11 @@ class Users extends React.Component {
                                                 <tr>
                                                     <th>Sl.no</th>
                                                     <th>Emp No</th>
-                                                    <th>First Name</th>
+                                                    <th>Employee Name</th>
                                                     <th>Email</th>
-                                                    <th>Last Modified</th>
-                                                    <th>Edit/Delete</th>
+                                                    <th>Employee Designation</th>
+                                                    <th>Last Active</th>
+                                                    <th>Update/Delete</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -227,22 +246,24 @@ class Users extends React.Component {
                                                         <tr>
                                                             <th scope="row">
                                                                 {i++}
-                                                                <img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />
+                                                                <img className="rounded-circle" style={{ width: '40px' }} src={avatar2} alt="activity-user" />
                                                             </th>
-                                                            <td>{item.User_Id}</td>
+                                                            <td>{item.Emp_Id}</td>
                                                             <td>
-                                                                <h6 className="mb-1">{item.User_Name}</h6>
+                                                                <h6 className="mb-1">{item.Emp_name}</h6>
                                                             </td>
                                                             <td>
-                                                                <h6 className="mb-1">{item.email}</h6>
+                                                                <h6 className="mb-1">{item.Emp_email}</h6>
                                                             </td>
                                                             <td>
-                                                                <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_Time}</h6>
+                                                                <h6 className="mb-1">{item.Emp_designation}</h6>
                                                             </td>
-                                                            <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ userid: item.User_Id, username: item.User_Name, email: item.email, showdata: false, edit: true }) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
+                                                            <td>
+                                                                <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_time}</h6>
+                                                            </td>
+                                                            <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ employeeid: item.Emp_Id, employeename: item.Emp_name, email: item.Emp_email, employeedesignation: item.Emp_designation, showdata: false, edit: true }) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
                                                         </tr>
-                                                    ) :
-                                                    null}
+                                                    ) : null}
                                             </tbody>
                                         </Table>
                                     </Card.Body>
@@ -266,40 +287,51 @@ class Users extends React.Component {
                             <Col>
                                 <Card>
                                     <Card.Header>
-                                        <Card.Title as="h5">Master User Details</Card.Title>
+                                        <Card.Title as="h5">Employee Details</Card.Title>
                                         {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List Master Users</a></div>
 
                                     </Card.Header>
                                     <Card.Body>
-                                        <h5>Enter New Master User Details</h5>
+                                        <h5>Enter New Employee Details</h5>
                                         <hr />
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="formUserID">
-                                                        <Form.Label>User ID</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter Users Employee Id" value={this.state.userid} onChange={(e) => { this.setState({ userid: e.target.value }) }} />
+                                                    <Form.Group controlId="EmployeeID">
+                                                        <Form.Label>Employee ID</Form.Label>
+                                                        <Form.Control type="text" placeholder="Enter Employee Id" value={this.state.employeeid} onChange={(e) => { this.setState({ employeeid: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
-                                                            Enter Users Employee Id.
-                                                    </Form.Text>
-                                                        {this.state.validation_err.userid ? <p style={{ color: "darkred" }}>{this.state.validation_err.userid[0]}</p> : null}
+                                                            Enter Employee  Id.
+                                                </Form.Text>
+                                                        {this.state.validation_err.employeeid ? <p style={{ color: "darkred" }}>{this.state.validation_err.employeeid[0]}</p> : null}
+
                                                     </Form.Group>
-                                                    <Form.Group controlId="formUserName">
-                                                        <Form.Label>User Name</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter User Name" value={this.state.username} onChange={(e) => { this.setState({ username: e.target.value }) }} />
+                                                    <Form.Group controlId="EmployeeName">
+                                                        <Form.Label>Employee Name</Form.Label>
+                                                        <Form.Control type="text" placeholder="Enter Employee Name" value={this.state.employeename} onChange={(e) => { this.setState({ employeename: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter User Name.
-                                                    </Form.Text>
-                                                        {this.state.validation_err.username ? <p style={{ color: "darkred" }}>{this.state.validation_err.username[0]}</p> : null}
+                                                </Form.Text>
+                                                        {this.state.validation_err.employeename ? <p style={{ color: "darkred" }}>{this.state.validation_err.employeename[0]}</p> : null}
+
                                                     </Form.Group>
                                                     <Form.Group controlId="formBasicEmail">
-                                                        <Form.Label>User Email</Form.Label>
-                                                        <Form.Control type="email" placeholder="Enter User Offical Email " value={this.state.email} onChange={(e) => { this.setState({ email: e.target.value }) }} />
+                                                        <Form.Label>Employee Email</Form.Label>
+                                                        <Form.Control type="email" placeholder="Enter Employee Offical Email " value={this.state.email} onChange={(e) => { this.setState({ email: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter User Offical Email Address.
-                                                    </Form.Text>
+                                                </Form.Text>
                                                         {this.state.validation_err.email ? <p style={{ color: "darkred" }}>{this.state.validation_err.email[0]}</p> : null}
+
+                                                    </Form.Group>
+                                                    <Form.Group controlId="Employeedesignation">
+                                                        <Form.Label>Employee designation</Form.Label>
+                                                        <Form.Control type="ext" placeholder="Enter User Offical Email " value={this.state.employeedesignation} onChange={(e) => { this.setState({ employeedesignation: e.target.value }) }} />
+                                                        <Form.Text className="text-muted">
+                                                            Enter Employee designation.
+                                                </Form.Text>
+                                                        {this.state.validation_err.employeedesignation ? <p style={{ color: "darkred" }}>{this.state.validation_err.employeedesignation[0]}</p> : null}
 
                                                     </Form.Group>
                                                     <Form.Group controlId="formpassword">
@@ -309,13 +341,12 @@ class Users extends React.Component {
                                                             Enter Temperory password for this Master User.
                                                     </Form.Text>
                                                         {this.state.validation_err.password ? <p style={{ color: "darkred" }}>{this.state.validation_err.password[0]}</p> : null}
-
                                                     </Form.Group>
 
                                                 </Form>
                                                 <Button variant="primary" onClick={this.submit}>
                                                     Submit
-                                            </Button>
+                                        </Button>
                                             </Col>
 
                                         </Row>
@@ -330,4 +361,4 @@ class Users extends React.Component {
     }
 }
 
-export default Users;
+export default ViewDetails;

@@ -1,5 +1,9 @@
 
 import { Getdata, PostdataToken, GetdataToken, Postfile, Postdata, Postdatanew } from './WebServices';
+import { securedBrowserCache } from 'secured-browser-storage';
+//securedBrowserCache.config('new-secret-key', 'new-prefix-this-is-optional');
+securedBrowserCache.config('cgpro_Supp0rt@123');
+
 
 export let Constants = {
   question_fileupload_pattern: [3, 4],
@@ -13,12 +17,13 @@ export let Constants = {
     email: '',
     username: '',
   },
+  employeeid: '',
   currentscreen: '',
   long: 0,
   lat: 0
 };
 
-let baseurl = 'http://115.124.127.245:3000/Mission_Onboarding/';
+let baseurl = 'http://115.124.127.245:3002/Mission_Onboarding/';
 export const Urls = {
   Login: baseurl + 'login', //User Login
   Logout: baseurl + 'logout', // logout
@@ -50,6 +55,7 @@ export async function Login(params) {
       Constants.user_profile.login_status = true;
       Constants.user_profile.userid = result.data.Id;
       Constants.user_profile.username = result.data.name;
+      Constants.user_profile.email = result.data.email;
     }
     return result;
   } catch (error) {
@@ -89,10 +95,11 @@ export async function singlefileupload(params) {
 }
 
 
-export async function Logout() {
+export async function Logout(params) {
   try {
-    console.log("url = " + Urls.Login);
-    let result = await Postdata(Urls.Logout, '');
+    console.log("url = " + Urls.Logout);
+    console.log("Params = ", params);
+    let result = await Postdata(Urls.Logout, params);
     console.log("Response = ", (result));
     return result;
   } catch (error) {
@@ -228,62 +235,37 @@ export async function Signup(params) {
 }
 
 
-export async function GetFile(option) {
+export async function Offlinestorage(params) {
   return new Promise((resolve, reject) => {
-    switch (option) {
-      case 'reg':
-        let imgname = Constants.user_profile.registercertiname;
-        console.log('Get file result  params= ' + Urls.getFile + imgname);
-        Getdata(Urls.getFile + imgname).then(result => {
-          if (result.Status) {
-            Constants.user_profile.registercertidata = result.Data;
-            resolve({ status: true, data: result.Data, message: result.Message })
-          } else {
-            resolve({ status: false, message: 'File Not Found' });
-          }
-        }).catch(error => {
-          console.log(error);
-        });
+    let result = {
+      status: false,
+      data: '',
+      message: ''
+    };
+
+    switch (params.choice) {
+      case "adddata":
+        securedBrowserCache.clear();
+        securedBrowserCache.setItem(params.key, params.value)
+        result.status = true;
         break;
-      case 'radio':
-        let imgname1 = Constants.user_profile.radiologistcertiname;
-        console.log('Get file result  params= ' + Urls.getFile + imgname1);
-       /* let result1 =*/ Getdata(Urls.getFile + imgname1).then(result1 => {
-          ;
-          if (result1.Status) {
-            console.log("result", (result1));
-            Constants.user_profile.radiologistcertidata = result1.Data;
-            resolve({ status: true, data: result1.Data, message: result1.Message });
-          } else {
-            resolve({ status: false, message: 'File Not Found' })
-            //display message sent from
-          }
-        }).catch(error => {
-          reject(error);
-          console.log("error");
-        })
+      case "getdata":
+        result.data = securedBrowserCache.getItem(params.key, params.value);
+        result.status = true;
         break;
-      case 'sign':
-        let imgname2 = Constants.user_profile.signname;
-        console.log('Get file result  params= ' + Urls.getFile + imgname2);
-       /* let result1 =*/ Getdata(Urls.getFile + imgname2).then(result1 => {
-          ;
-          if (result1.Status) {
-            console.log("result", (result1));
-            Constants.user_profile.signaturedata = result1.Data;
-            resolve({ status: true, data: result1.Data, message: result1.Message });
-          } else {
-            resolve({ status: false, message: 'File Not Found' })
-          }
-        }).catch(error => {
-          reject(error);
-          console.log("error");
-        })
+      case "deletedata": securedBrowserCache.removeItem(params.key);
+        result.status = true;
+        break;
+      case "clear": securedBrowserCache.clear();
+        result.status = true;
+        break;
+      default: result.status = false;
+        result.message = "choice cannot be identified";
         break;
     }
-  })
+    resolve(result);
+  });
 }
-
 
 
 
