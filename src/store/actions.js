@@ -5,4 +5,5 @@ export const FULL_SCREEN_EXIT = 'FULL_SCREEN_EXIT';
 export const CHANGE_LAYOUT = 'CHANGE_LAYOUT';
 export const NAV_CONTENT_LEAVE = 'NAV_CONTENT_LEAVE';
 export const NAV_COLLAPSE_LEAVE = 'NAV_COLLAPSE_LEAVE';
-export const USER_DETAILS = 'user_details';
+export const USER_DETAILS = 'USER_DETAILS';
+export const LOGIN_STATUS = 'LOGIN_STATUS';

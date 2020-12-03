@@ -34,14 +34,14 @@ const SubLevels = React.lazy(() => import('./Layout/Master/SubLevel'));
 const Questions = React.lazy(() => import('./Layout/Master/Question'));
 const Profile = React.lazy(() => import('./Layout/Master/Profile'));
 const Pattern = React.lazy(() => import('./Layout/Master/Pattern'));
-const ViewDetails = React.lazy(() => import('./Layout/User/ViewDetails'));
+//const ViewDetails = React.lazy(() => import('./Layout/User/ViewDetails'));
 
 //const SignUp1 = React.lazy(() => import('./Layout/Authentication/SignUp/SignUp1'));
 //const Signin1 = React.lazy(() => import('./Layout/Authentication/SignIn/SignIn1'));
 
 
 const routes = [
-    { path: '/ViewDetails', exact: true, name: 'ViewDetails', component: ViewDetails },
+    // { path: '/ViewDetails', exact: true, name: 'ViewDetails', component: ViewDetails },
     { path: '/Pattern', exact: true, name: 'Pattern', component: Pattern },
     { path: '/Profile', exact: true, name: 'Profile', component: Profile },
     { path: '/Questions', exact: true, name: 'Questions', component: Questions },

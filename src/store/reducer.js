@@ -1,11 +1,14 @@
 import * as actionTypes from './actions';
 import config from './../config';
+import { Constants } from '../network/Apicall';
 
 const initialState = {
     isOpen: [], //for active default menu
     isTrigger: [], //for active default menu, set blank for horizontal
     ...config,
     isFullScreen: false, // static can't change
+    login_status: false,
+    user_details: {}
 };
 
 const reducer = (state = initialState, action) => {
@@ -83,10 +86,15 @@ const reducer = (state = initialState, action) => {
                 ...state,
                 layout: action.layout
             };
+        case actionTypes.LOGIN_STATUS:
+            return {
+                ...state,
+                login_status: !state.login_status
+            };
         case actionTypes.USER_DETAILS:
             return {
                 ...state,
-                layout: action.layout
+                user_details: action.data
             };
         default:
             return state;
