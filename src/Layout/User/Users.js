@@ -77,9 +77,9 @@ class Users extends React.Component {
             // if (String(this.state.searchdata).length > 0) {
             let validation_result = await validatedata(params, 'master');
             if (validation_result.status) {
-                this.setState({ loading: true });
+                //this.setState({ loading: true });
                 let result = await fetch(params, 'master')
-                this.setState({ loading: false });
+                //this.setState({ loading: false });
                 if (result.status) {
                     this.setState({ data: result.data, validation_msg: '' });
                 } else {
@@ -193,12 +193,12 @@ class Users extends React.Component {
                                                     aria-label="Recipient's username"
                                                     aria-describedby="basic-addon2"
                                                     name='search'
-                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }) }}
+                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }); }, 1500) }}
                                                 /> : null
                                                 }
                                                 <Dropdown as={InputGroup.Append}>
                                                     <Dropdown.Toggle split variant="secondary" id="dropdown-split-basic-2" />
-                                                    <Button variant="secondary" onClick={this.loaddata}>Search</Button>
+                                                    {/*<Button variant="secondary" onClick={this.loaddata}>Search</Button>*/}
                                                     <Dropdown.Menu>
                                                         <Dropdown.Item hred="#/action-1" onClick={() => { this.displayfilter('id') }}>Search by Id</Dropdown.Item>
                                                         <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('name') }}>Search by Name</Dropdown.Item>

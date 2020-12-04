@@ -4,8 +4,10 @@ import { NavLink } from 'react-router-dom';
 import './../../../assets/scss/style.scss';
 import Aux from "../../../hoc/_Aux";
 import Breadcrumb from "../../../App/layout/AdminLayout/Breadcrumb";
-import { Login, Offlinestorage } from "../../../network/Apicall";
+import { Login, Offlinestorage, Get_Login_status, Constants } from "../../../network/Apicall";
 import disableBrowserBackButton from 'disable-browser-back-navigation';
+import * as actionTypes from "../../../store/actions";
+import { connect } from 'react-redux';
 
 class SignUp1 extends React.Component {
     constructor(props) {
@@ -17,13 +19,39 @@ class SignUp1 extends React.Component {
             validation_empid: "",
             validation_password: "",
             loading: false,
-
+            disable: false,
         }
         this.submit = this.submit.bind(this);
     }
 
-    componentDidMount = () => {
+    componentDidMount = async () => {
         disableBrowserBackButton();
+        try {
+            if (!this.props.login_status) {
+                let offline_result = await Offlinestorage({ choice: 'getdata', key: 'userprofile' });
+                console.log("offline db result = ", offline_result);
+                if (offline_result.status && offline_result.data) {
+                    Constants.user_profile.userid = offline_result.data.userid;
+                    Constants.user_profile.username = offline_result.data.username;
+                    Constants.user_profile.email = offline_result.data.email;
+                    Constants.user_profile.login_status = offline_result.data.login_status;
+                    let params = {
+                        type: "master",
+                        userid: offline_result.data.userid,
+                    }
+                    let result = await Get_Login_status(params);
+                    if (result.status) {
+                        this.props.update_loginstatus();
+                        this.props.update_userdetails({ userid: offline_result.data.userid, username: offline_result.data.username, email: offline_result.data.email, login_status: true })
+                        this.props.history.push({ pathname: '/Users' })
+                    }
+                }
+            } else {
+                this.props.history.push({ pathname: '/Users' })
+            }
+        } catch (err) {
+            console.log(err);
+        }
     }
 
     submit = async () => {
@@ -31,30 +59,29 @@ class SignUp1 extends React.Component {
             disableBrowserBackButton();
             if (String(this.state.empid).length > 0 && String(this.state.password).length > 0) {
                 if (String(this.state.password).length < 8) {
-                    this.setState({ validation_msg: "Password should br greater then 8 Characters" });
+                    this.setState({ validation_msg: "Password should be greater then 8 Characters" });
                 } else {
                     let params = {
                         type: "master",  // type=”employee” for employee login
                         userid: this.state.empid,
                         password: this.state.password
                     }
+                    this.setState({ disable: true });
                     let result = await Login(params);
+                    this.setState({ disable: false });
                     if (result.status) {
                         //this.props.history.push({ pathname: '/dashboard' })
                         let storageresult = await Offlinestorage({ choice: 'adddata', key: 'userprofile', value: { login_status: true, userid: result.data.Id, username: result.data.name, email: result.data.email } });
                         console.log("offline result =", (storageresult));
                         if (storageresult.status) {
+                            this.props.update_userdetails({ userid: result.data.Id, username: result.data.name, email: result.data.email, login_status: true });
+                            this.props.update_loginstatus();
                             console.log("navigtion to user")
                             this.props.history.push({ pathname: '/Users' })
                         }
                     } else {
-                        let message = result.message
-                        /*if (result.validation) {
-                            console.log("entered validation");
-                            let validation = result.validation.errors;
-                            let message = (validation.userid)
-                        }*/
-                        this.setState({ validation_msg: message });
+                        //let message = result.message
+                        this.setState({ validation_msg: result.message });
                     }
                 }
             } else {
@@ -110,9 +137,9 @@ class SignUp1 extends React.Component {
                                         <label htmlFor="checkbox-fill-a1" className="cr"> Save credentials</label>
                                     </div>
                                 </div>
-                                <button className="btn btn-primary shadow-2 mb-4" onClick={this.submit}>Login</button>
+                                <button className="btn btn-primary shadow-2 mb-4" onClick={() => { if (!this.state.disable) { this.submit() } }}>Login</button>
                                 <p className="mb-2 text-muted">Forgot password? <NavLink to="/auth/reset-password-1">Reset</NavLink></p>
-                                <p className="mb-0 text-muted">Don’t have an account? <NavLink to="/auth/signup-1">Signup</NavLink></p>
+                                {/*<p className="mb-0 text-muted">Don’t have an account? <NavLink to="/auth/signup-1">Signup</NavLink></p>*/}
                             </div>
                         </div>
                     </div>
@@ -122,4 +149,20 @@ class SignUp1 extends React.Component {
     }
 }
 
-export default SignUp1;
+const mapStateToProps = state => {
+    return {
+        login_status: state.login_status,
+        user_details: state.user_details,
+    }
+};
+
+const mapDispatchToProps = dispatch => {
+    return {
+        update_loginstatus: () => dispatch({ type: actionTypes.LOGIN_STATUS }),
+        update_userdetails: (data) => dispatch({ type: actionTypes.USER_DETAILS, data: data })
+    }
+};
+
+export default connect(mapStateToProps, mapDispatchToProps)(SignUp1);
+
+//export default SignUp1;

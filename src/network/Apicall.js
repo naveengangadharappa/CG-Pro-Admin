@@ -27,6 +27,7 @@ let baseurl = 'http://115.124.127.245:3002/Mission_Onboarding/';
 export const Urls = {
   Login: baseurl + 'login', //User Login
   Logout: baseurl + 'logout', // logout
+  Get_Login_status: baseurl + 'getlogin_status',
   Master: baseurl + 'Master', //Get Otp
   Employee: baseurl + 'Employee',
   Level: baseurl + 'Level',
@@ -107,6 +108,21 @@ export async function Logout(params) {
     return { status: false, message: 'Request cant be complete Try Again' };
   }
 }
+
+export async function Get_Login_status(params) {
+  try {
+    console.log("url = " + Urls.Get_Login_status);
+    console.log("Params = ", params);
+    let result = await Postdata(Urls.Get_Login_status, params);
+    console.log("Response = ", (result));
+    return result;
+  } catch (error) {
+    console.log(error);
+    return { status: false, message: 'Request cant be complete Try Again' };
+  }
+}
+
+
 
 export async function fetch(params, option) {
   try {

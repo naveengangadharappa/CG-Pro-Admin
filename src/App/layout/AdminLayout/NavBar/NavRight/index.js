@@ -10,31 +10,35 @@ import Avatar1 from '../../../../../assets/images/user/avatar-1.jpg';
 import Avatar2 from '../../../../../assets/images/user/avatar-2.jpg';
 import Avatar3 from '../../../../../assets/images/user/avatar-3.jpg';
 import { Logout, Constants, Offlinestorage } from "../../../../../network/Apicall";
+import * as actionTypes from "../../../../../store/actions";
+import { connect } from 'react-redux';
+
 
 class NavRight extends React.Component {
     constructor(props) {
         super(props)
         this.state = {
             listOpen: false,
-            username: Constants.user_profile.username,
+            username: '',
             userid: '',
         };
     }
 
     componentDidMount = async () => {
         try {
-            let offline_result = await Offlinestorage({ choice: 'getdata', key: 'userprofile' });
-            if (offline_result.status) {
-                Constants.user_profile.userid = offline_result.data.userid;
-                Constants.user_profile.username = offline_result.data.username;
-                Constants.user_profile.email = offline_result.data.email;
-                Constants.user_profile.login_status = offline_result.data.login_status;
-                this.setState({ username: offline_result.data.username, userid: offline_result.data.userid })
-            }
+            this.setState({ username: this.props.user_details.username })
+            /* let offline_result = await Offlinestorage({ choice: 'getdata', key: 'userprofile' });
+             if (offline_result.status && Object.keys(offline_result.data).length > 0) {
+                 Constants.user_profile.userid = offline_result.data.userid;
+                 Constants.user_profile.username = offline_result.data.username;
+                 Constants.user_profile.email = offline_result.data.email;
+                 Constants.user_profile.login_status = offline_result.data.login_status;
+                 this.props.update_userdetails({ userid: offline_result.data.userid, username: offline_result.data.username, email: offline_result.data.email, login_status: offline_result.data.login_status })
+                 this.setState({ username: offline_result.data.username, userid: offline_result.data.userid })
+             }*/
         } catch (err) {
             console.log(err);
         }
-
     }
 
     logout = async () => {
@@ -47,14 +51,16 @@ class NavRight extends React.Component {
                 }
                 let result = await Logout(params);
                 if (result.status) {
-                    alert(result.message);
                     Constants.user_profile.userid = '';
                     Constants.user_profile.login_status = '';
                     Constants.user_profile.username = '';
                     let offline_result = await Offlinestorage({ choice: 'clear' });
                     if (offline_result.status) {
                         console.log("DB Cleared Successfully");
+                        this.props.update_loginstatus();
+                        this.props.update_userdetails({})
                         this.props.history.push({ pathname: '/auth/signin-1' });
+                        alert(result.message);
                     }
                 } else {
                     //this.props.history.push({ pathname: '/auth/signin-1' });
@@ -153,7 +159,7 @@ class NavRight extends React.Component {
                             <Dropdown.Menu alignRight className="profile-notification">
                                 <div className="pro-head">
                                     <img src={Avatar1} className="img-radius" alt="User Profile" />
-                                    <span>{this.state.username}</span>
+                                    <span>{this.props.user_details.username}</span>
                                     <a href={DEMO.BLANK_LINK} className="dud-logout" title="Logout" onClick={this.logout}>
                                         <i className="feather icon-log-out" />
                                     </a>
@@ -175,4 +181,22 @@ class NavRight extends React.Component {
     }
 }
 
-export default NavRight;
+const mapStateToProps = state => {
+    return {
+        login_status: state.login_status,
+        user_details: state.user_details,
+    }
+};
+
+const mapDispatchToProps = dispatch => {
+    return {
+        update_loginstatus: () => dispatch({ type: actionTypes.LOGIN_STATUS }),
+        update_userdetails: (data) => dispatch({ type: actionTypes.USER_DETAILS, data: data })
+    }
+};
+
+//export default connect(mapStateToProps, mapDispatchToProps)(NavBar);
+//export default NavBar;
+
+
+export default connect(mapStateToProps, mapDispatchToProps)(NavRight);
