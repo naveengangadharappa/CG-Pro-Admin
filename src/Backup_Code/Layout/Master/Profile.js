@@ -12,8 +12,6 @@ import avatar2 from '../../assets/images/user/avatar-2.jpg';
 import avatar3 from '../../assets/images/user/avatar-3.jpg';
 import { Constants, adddata, Offlinestorage } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
-import * as actionTypes from "../../store/actions";
-import { connect } from 'react-redux';
 
 class Profile extends React.Component {
     constructor(props) {
@@ -22,16 +20,12 @@ class Profile extends React.Component {
             option: 'profile',
             choice: 'profile',
             password: '',
-            userid: '',
-            username: '',
-            useremail: '',
+            userid: Constants.user_profile.userid,
+            username: Constants.user_profile.username,
+            useremail: Constants.user_profile.email,
             password: '',
             validation_err: {}
         }
-    }
-
-    componentDidMount = async () => {
-        this.setState({ userid: this.props.user_details.userid, username: this.props.user_details.username, useremail: this.props.user_details.email })
     }
 
     submit = async () => {
@@ -52,7 +46,9 @@ class Profile extends React.Component {
                     let storageresult = await Offlinestorage({ choice: 'adddata', key: 'userprofile', value: { login_status: true, userid: this.state.userid, username: this.state.username, email: this.state.useremail } });
                     console.log("offline result =", (storageresult));
                     if (storageresult.status) {
-                        this.props.update_userdetails({ login_status: true, userid: this.state.userid, username: this.state.username, email: this.state.useremail })
+                        Constants.user_profile.userid = this.state.userid;
+                        Constants.user_profile.username = this.state.username;
+                        Constants.user_profile.email = this.state.useremail;
                         alert(result.message);
                         this.setState({ validation_msg: result.message, color: 'darkgreen', showdata: true });
                     }
@@ -81,14 +77,9 @@ class Profile extends React.Component {
                 let result = await adddata(params, 'master');
                 this.setState({ loading: false })
                 if (result.status) {
-                    let offline_result = await Offlinestorage({ choice: 'clear' });
-                    if (offline_result.status) {
-                        console.log("DB Cleared Successfully");
-                        this.props.update_loginstatus();
-                        this.props.update_userdetails({})
-                        this.props.history.push({ pathname: '/auth/signin-1' });
-                        alert("Password Update successfull Please Login !!");
-                    }
+                    alert("Password Update successfull Please Login !!");
+                    this.setState({ validation_msg: "Password Updated successfull", color: 'darkgreen', showdata: true });
+                    this.props.history.push({ pathname: '/auth/signin-1' });
                 } else {
                     this.setState({ validation_msg: result.message, color: 'darkred' });
                 }
@@ -200,19 +191,4 @@ class Profile extends React.Component {
     }
 }
 
-const mapStateToProps = state => {
-    return {
-        login_status: state.login_status,
-        user_details: state.user_details,
-    }
-};
-
-const mapDispatchToProps = dispatch => {
-    return {
-        update_loginstatus: () => dispatch({ type: actionTypes.LOGIN_STATUS }),
-        update_userdetails: (data) => dispatch({ type: actionTypes.USER_DETAILS, data: data })
-    }
-};
-
-
-export default connect(mapStateToProps, mapDispatchToProps)(Profile);
+export default Profile;
