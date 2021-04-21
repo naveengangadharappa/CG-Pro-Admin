@@ -6,12 +6,10 @@ import NavLeft from "./NavLeft";
 import NavRight from "./NavRight";
 import Aux from "../../../../hoc/_Aux";
 import DEMO from "../../../../store/constant";
+import logo from "../../../../assets/images/cgpro_logo.png";
 import * as actionTypes from "../../../../store/actions";
 
 class NavBar extends Component {
-    constructor(props) {
-        super(props)
-    }
 
     render() {
 
@@ -28,15 +26,16 @@ class NavBar extends Component {
 
 
         return (
-
-
             <Aux>
                 <header className={headerClass.join(' ')}>
                     <div className="m-header">
                         <a className={toggleClass.join(' ')} id="mobile-collapse1" href={DEMO.BLANK_LINK} onClick={this.props.onToggleNavigation}><span /></a>
                         <a href={DEMO.BLANK_LINK} className="b-brand">
-                            <div className="b-bg">
-                                <i className="feather icon-trending-up" />
+                            <div >
+                                {/*<i className="feather icon-trending-up" />*/}
+                                <img src={logo} alt="Logo" style={{ height: '65%', width: '65%' }} />
+
+
                             </div>
                             <span className="b-title">CGPro</span>
                         </a>

@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import windowSize from 'react-window-size';
 
 import * as actionTypes from "../../../../../store/actions";
@@ -17,7 +17,8 @@ class OutsideClick extends Component {
     }
 
     componentWillUnmount() {
-        document.removeEventListener('mousedown', this.handleOutsideClick);
+        document.removeEventListener('mousedown', this.handleOutsideClick, false);
+        // document.removeEventListener('mousedown', () => { });
     }
 
     setWrapperRef(node) {
@@ -48,8 +49,8 @@ const mapStateToProps = state => {
 
 const mapDispatchToProps = dispatch => {
     return {
-        onToggleNavigation: () => dispatch({type: actionTypes.COLLAPSE_MENU}),
+        onToggleNavigation: () => dispatch({ type: actionTypes.COLLAPSE_MENU }),
     }
 };
 
-export default connect(mapStateToProps, mapDispatchToProps) (windowSize(OutsideClick));
+export default connect(mapStateToProps, mapDispatchToProps)(windowSize(OutsideClick));

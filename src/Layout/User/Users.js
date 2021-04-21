@@ -1,21 +1,20 @@
 import React from 'react';
 import Loader from "../../App/layout/Loader";
 import { Row, Col, Card, Table } from 'react-bootstrap';
-import { Form, Button, InputGroup, FormControl, DropdownButton, Dropdown } from 'react-bootstrap';
+import { Form, Button, InputGroup, FormControl, Dropdown } from 'react-bootstrap';
 
 import Aux from "../../hoc/_Aux";
 import DEMO from "../../store/constant";
 
-import avatar1 from '../../assets/images/user/avatar-1.jpg';
-import avatar2 from '../../assets/images/user/avatar-2.jpg';
-import avatar3 from '../../assets/images/user/avatar-3.jpg';
 import { fetch, Constants, adddata, deletedata } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
+import Pagination from 'react-responsive-pagination';
 
 class Users extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            Total_rows: 1,
             pageno: 0,
             loading: false,
             data: [],
@@ -36,23 +35,22 @@ class Users extends React.Component {
 
     async componentDidMount() {
         try {
-            console.log("this.props.history =", (this.props.history))
             Constants.currentscreen = 'master';
             let params = {
-                action: "fetchdata"
+                action: "fetchdata",
+                pageno: this.state.pageno
             }
             this.setState({ loading: true })
             let result = await fetch(params, 'master')
             this.setState({ loading: false })
             if (result.status) {
-                this.setState({ data: result.data });
+                this.setState({ data: result.data, pageno: result.page_no });
             } else {
                 this.setState({ validation_msg: result.message })
             }
         } catch (err) {
             console.log(err)
         }
-
     }
 
     loaddata = async () => {
@@ -63,6 +61,7 @@ class Users extends React.Component {
                 filter: '',
                 userid: 0,
                 username: '',
+                pageno: this.state.pageno
             }
             switch (this.state.filter) {
                 case 'id': params.userid = this.state.searchdata;
@@ -81,7 +80,13 @@ class Users extends React.Component {
                 let result = await fetch(params, 'master')
                 //this.setState({ loading: false });
                 if (result.status) {
-                    this.setState({ data: result.data, validation_msg: '' });
+                    console.log("page no = " + this.state.pageno);
+                    if (result.Total_rows && !(result.Total_rows == null)) {
+                        this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+                    } else {
+                        this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+                    }
+                    //this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
                 } else {
                     this.setState({ validation_msg: result.message, color: 'darkred' })
                 }
@@ -182,7 +187,7 @@ class Users extends React.Component {
                             <Col>
                                 <Card className='Recent-Users'>
                                     <Card.Header>
-                                        <Card.Title as='h5'>Recent Users </Card.Title>
+                                        <Card.Title as='h5'>Master Users </Card.Title>
                                         <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
                                         </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: false, edit: false }) }} >Add Master User</a></div>
@@ -193,7 +198,7 @@ class Users extends React.Component {
                                                     aria-label="Recipient's username"
                                                     aria-describedby="basic-addon2"
                                                     name='search'
-                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }); }, 1500) }}
+                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }); }, 1000) }}
                                                 /> : null
                                                 }
                                                 <Dropdown as={InputGroup.Append}>
@@ -223,11 +228,11 @@ class Users extends React.Component {
                                             </thead>
                                             <tbody>
                                                 {this.state.data.length > 0 ?
-                                                    this.state.data.map(item =>
-                                                        <tr>
+                                                    this.state.data.map((item, index) =>
+                                                        <tr key={index}>
                                                             <th scope="row">
                                                                 {i++}
-                                                                <img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />
+                                                                {/*<img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />*/}
                                                             </th>
                                                             <td>{item.User_Id}</td>
                                                             <td>
@@ -237,7 +242,7 @@ class Users extends React.Component {
                                                                 <h6 className="mb-1">{item.email}</h6>
                                                             </td>
                                                             <td>
-                                                                <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_Time}</h6>
+                                                                <h6 className="text-muted">{(item.login_status) ? <p><i className="fa fa-circle text-c-green f-10 m-r-15" /><b>Login at</b> {item.modified_Time}</p> : <p><i className="fa fa-circle text-c-red f-10 m-r-15" /><b>Logout at</b> {item.modified_Time}</p>}</h6>
                                                             </td>
                                                             <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ userid: item.User_Id, username: item.User_Name, email: item.email, showdata: false, edit: true }) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
                                                         </tr>
@@ -247,11 +252,16 @@ class Users extends React.Component {
                                         </Table>
                                     </Card.Body>
                                     <Card.Footer>
-                                        <div style={{ float: "right" }}>
-                                            {this.state.pageno >= 1 ? <Button variant="primary" onClick={this.loaddata}>{'<-'}</Button> : null}
-                                            <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button>
-                                            <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
-                                        </div>
+                                        {/* <div style={{ float: "right" }}>
+                                            {this.state.pageno > 0 ? <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno-- }); this.loaddata() }}><i className="feather icon-arrow-left text-c-white f-20 m-r-4" /></Button> : null}
+                                            {this.state.data.length < 4 ? null : <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}><i className="feather icon-arrow-right text-c-white f-20 m-r-4" /></Button>}
+                                                    </div>*/}
+                                        <Pagination
+                                            current={this.state.pageno + 1}
+                                            total={Math.ceil(this.state.Total_rows / Constants.pagelimit)}
+                                            onPageChange={async (selected_page) => { console.log("Selected page no = ", selected_page - 1); await this.setState({ pageno: selected_page - 1 }); this.loaddata() }}
+                                        />
+
                                     </Card.Footer>
                                 </Card>
 
@@ -279,7 +289,7 @@ class Users extends React.Component {
                                                 <Form>
                                                     <Form.Group controlId="formUserID">
                                                         <Form.Label>User ID</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter Users Employee Id" value={this.state.userid} onChange={(e) => { this.setState({ userid: e.target.value }) }} />
+                                                        <Form.Control type="text" placeholder="Enter Users Employee Id" value={this.state.userid} onChange={(e) => { if (!this.state.edit) this.setState({ userid: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Users Employee Id.
                                                     </Form.Text>
@@ -287,7 +297,7 @@ class Users extends React.Component {
                                                     </Form.Group>
                                                     <Form.Group controlId="formUserName">
                                                         <Form.Label>User Name</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter User Name" value={this.state.username} onChange={(e) => { this.setState({ username: e.target.value }) }} />
+                                                        <Form.Control type="text" placeholder="Enter User Name" value={this.state.username} onChange={(e) => { if (!this.state.edit) this.setState({ username: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter User Name.
                                                     </Form.Text>

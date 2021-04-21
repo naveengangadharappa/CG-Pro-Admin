@@ -1,16 +1,9 @@
 import React from 'react';
-import { Row, Col, Card, Table } from 'react-bootstrap';
-import { NavLink } from 'react-router-dom';
-
+import { Row, Col, Card, } from 'react-bootstrap';
 import Aux from "../../hoc/_Aux";
 import DEMO from "../../store/constant";
-import { Form, Button, InputGroup, FormControl, DropdownButton, Dropdown } from 'react-bootstrap';
-
-
-import avatar1 from '../../assets/images/user/avatar-1.jpg';
-import avatar2 from '../../assets/images/user/avatar-2.jpg';
-import avatar3 from '../../assets/images/user/avatar-3.jpg';
-import { Constants, adddata, Offlinestorage } from "../../network/Apicall";
+import { Form, Button } from 'react-bootstrap';
+import { adddata, Offlinestorage } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
 import * as actionTypes from "../../store/actions";
 import { connect } from 'react-redux';

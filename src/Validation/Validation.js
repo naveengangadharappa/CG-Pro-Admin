@@ -1,9 +1,6 @@
-//const xss = require("xss");
-//const Validator = require('validatorjs');
-//const errmsg = require('./ErrorMessage');
-//const { Level } = require("./ErrorMessage");
 import errmsg from './ErrorMessage';
 import Validator from 'validatorjs';
+import xss from 'xss';
 
 const Employeelogin = {
     employeeid: 'required|alpha_num',
@@ -22,6 +19,15 @@ const Employee = {
     avathar_id: 'string',
     employeedesignation: 'required|string',
     password: 'required|string|min:8',
+    action: 'required|alpha'
+};
+const Employee_update = {
+    employeeid: 'required|alpha_num|min:10',
+    employeename: 'required|string|min:3|max:50',
+    email: 'required|email',
+    avathar_id: 'string',
+    employeedesignation: 'required|string',
+    password: 'string|min:8',
     action: 'required|alpha'
 };
 const Employeefetch = {
@@ -61,19 +67,21 @@ const updatepassword = {
     password: 'required|string|min:8',
 }
 const level = {
-    leveltitle: 'required|alpha',
-    levelsummary: 'required|string',
+    title: 'required|string',
+    discription: 'required|string',
 };
+const sublevel = {
+    levelid: 'required|alpha_num',
+    title: 'required|string',
+    discription: 'required|string',
+};
+
 const levelfetch = {
     levelid: 'alpha_num',
     leveltitle: 'string',
     filter: 'alpha'
 };
-const sublevel = {
-    levelid: 'required|alpha_num',
-    subleveltitle: 'required|string',
-    subleveldescription: 'required|string',
-};
+
 const sublevelfetch = {
     action: 'required|alpha',
     sublevelid: 'alpha_num',
@@ -118,25 +126,16 @@ const hintfetch = {
     filter: 'alpha'
 };
 const pattern = {
-    patterntitle: 'required|string',
+    title: 'required|string',
+    patterndescription: 'required|string',
+    question_fileupload: 'boolean',
+    option_fileupload: 'boolean',
+    hint_fileupload: 'boolean'
 };
 const patternfetch = {
     patternid: 'alpha_num',
     patterntitle: 'string',
     filter: 'alpha'
-};
-const levelmapping = {
-    levelid: 'required|alpha_num',
-    sublevelid: 'required|alpha_num',
-    questionid: 'required|alpha_num'
-};
-const filemapping = {
-    type: 'required|alpha',
-    questionid: 'required|alpha_num',
-};
-const filemapping_emp = {
-    type: 'required|alpha',
-    employeeid: 'required|alpha_num',
 };
 
 const submitscores = {
@@ -215,7 +214,7 @@ export const validatedata = async (body, option) => {
                             resolve(validation.fails() ? { status: false, message: 'Validation Error', validation: validation.errors.errors } : { status: true })
                             break;
                         case 'updatedata':
-                            validation = new Validator(body, Employee, errmsg.Employee);
+                            validation = new Validator(body, Employee_update, errmsg.Employee);
                             resolve(validation.fails() ? { status: false, message: 'Validation Error', validation: validation.errors.errors } : { status: true })
                             break;
                         case 'updatepassword':
@@ -417,6 +416,28 @@ export const validatedata = async (body, option) => {
         } catch (err) {
             console.log(err);
             reject(err);
+        }
+    });
+}
+
+
+export const check_security = async (body) => {
+    return new Promise((resolve, reject) => {
+        try {
+            //let keys = Object.keys(body);
+            let values = Object.values(body);
+
+            let result = values.every(data => {
+                let temp = String(data)
+                console.log("xss value = ", xss(values));
+                if (temp.includes(`<script>`) || temp.includes(`console.log(`) || temp.includes(`alert(`) || temp.includes(`||`)) {
+                    return false;
+                } else { return true; }
+            });
+            resolve(result ? { status: true, message: "security check passed" } : { status: false, message: `Dangerous Input detected` });
+        } catch (err) {
+            reject({ status: false, detailerror: err, err: true })
+            console.log("Security Check Error = ")
         }
     });
 }

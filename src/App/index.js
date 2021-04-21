@@ -17,9 +17,6 @@ const AdminLayout = Loadable({
 
 
 class App extends Component {
-    constructor(props) {
-        super(props);
-    }
 
     render() {
         const menu = routes.map((route, index) => {
@@ -30,22 +27,10 @@ class App extends Component {
                     exact={route.exact}
                     name={route.name}
                     render={props => (
-                        <route.component {...props} />
+                        <route.component {...props} key={index} />
                     )} />
             ) : (null);
         });
-        /*const menu1 = newroutes.map((route, index) => {
-            return (route.component) ? (
-                <Route
-                    key={index}
-                    path={route.path}
-                    exact={route.exact}
-                    name={route.name}
-                    render={props => (
-                        <route.component {...props} />
-                    )} />
-            ) : (null);
-        });*/
 
         return (
             <Aux>
@@ -58,17 +43,6 @@ class App extends Component {
                     </Suspense>
                 </ScrollToTop>
             </Aux>
-            /*<Route render={(props) =>
-                <ScrollToTop>
-                    <Suspense fallback={<Loader />}>
-                        <Switch>
-                            {menu}
-                            <Route exact name="index" path="/" component={AdminLayout} />
-                        </Switch>
-                    </Suspense>
-                </ScrollToTop>
-            }
-            />*/
         );
     }
 }

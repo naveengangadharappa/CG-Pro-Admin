@@ -1,11 +1,11 @@
 import { Constants } from './Apicall'
 import axios from 'axios';
-import request from './Request'
+// import request from './Request'
 
-const axiosinstance = axios.create({
-  withCredentials: true,
-  baseURL: 'http://115.124.127.245:3002/Mission_Onboarding/'
-});
+// const axiosinstance = axios.create({
+//   withCredentials: true,
+//   baseURL: 'http://115.124.127.245:3002/Mission_Onboarding/'
+// });
 
 
 const axiosConfig = {
@@ -20,8 +20,6 @@ const axiosConfig = {
 export function Getdata(url) {
   console.log("Url = ", url);
   return new Promise((resolve, reject) => {
-    /*CheckConnectivity().then(resultcon => {
-      if (resultcon.status) {*/
     axios({
       method: 'get',
       url: url,
@@ -30,7 +28,7 @@ export function Getdata(url) {
         'deviceid': Constants.DeviceId,
       }
     }).then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         resolve(response.data);
       } else {
         resolve({ Status: false, networkerr: true, Message: "Server Not Responding" })
@@ -40,13 +38,6 @@ export function Getdata(url) {
         console.error(error);
         reject(error);
       });
-    /* } else {
-       resolve({ Status: false, networkerr: true, Message: "Please Connect to the internet and Try again" })
-     }
-   }).catch(error => {
-     console.error(error);
-     reject(error);
-   });*/
     setTimeout(() => {
       console.log("entered settimeout");
       resolve({ Status: false, networkerr: true, Message: 'Network Request TimedOut' });
@@ -57,9 +48,6 @@ export function Getdata(url) {
 
 export function GetdataToken(url, token) {
   return new Promise((resolve, reject) => {
-    /*  CheckConnectivity().then(resultcon => {
-        if (resultcon.status) {
-          console.log("getData Token");*/
     axios({
       method: 'get',
       url: url,
@@ -71,7 +59,7 @@ export function GetdataToken(url, token) {
         'deviceid': Constants.DeviceId,
       }
     }).then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         resolve(response.data);
       } else {
         resolve({ status: false, message: "Server Not Responding" })
@@ -81,13 +69,6 @@ export function GetdataToken(url, token) {
         console.error(error);
         reject(error);
       });
-    /* } else {
-       resolve({ status: false, message: "Please Connect to the internet and Try again" })
-     }
-   }).catch(error => {
-     console.error(error);
-     reject(error);
-   });*/
     setTimeout(() => {
       console.log("entered settimeout");
       resolve({ Status: false, Message: 'Network Request TimedOut' });
@@ -97,8 +78,6 @@ export function GetdataToken(url, token) {
 
 export function Postdata(url, data) {
   return new Promise((resolve, reject) => {
-    /*CheckConnectivity().then(resultcon => {
-      if (resultcon.status) {*/
     axios({
       method: 'post',
       url: url,
@@ -111,7 +90,7 @@ export function Postdata(url, data) {
       },
       data: data,
     }).then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         resolve(response.data);
       } else {
         resolve({ status: false, message: "Server Not Responding" })
@@ -120,13 +99,6 @@ export function Postdata(url, data) {
       console.error(error);
       reject(error);
     });
-    /*} else {
-      resolve({ status: false, message: "Please Connect to the internet and Try again" })
-    }
-  }).catch(error => {
-    console.error(error);
-    reject(error);
-  });*/
     setTimeout(() => {
       console.log("entered settimeout");
       resolve({ Status: false, Message: 'Network Request TimedOut' });
@@ -136,31 +108,8 @@ export function Postdata(url, data) {
 
 export function Postdatanew(url, data) {
   return new Promise((resolve, reject) => {
-    /* axios.defaults.withCredentials = true;
-     axios({
-       method: 'post',
-       url: url,
-       timeout: 30000,
-       baseURL: 'http://115.124.127.245:3002/Mission_Onboarding/',
-       withCredentials: true,
-       headers: {
-         'Content-Type': 'application/json',
-         //'Authorization': 'barer',
-       },
-       data: data
-     }).then(response => {
-       if (response.status == 200) {
-         resolve(response.data);
-       } else {
-         resolve({ status: false, message: "Server Not Responding" })
-       }
-     }).catch(error => {
-       console.error(error);
-       reject(error);
-     });*/
-
     axios.post(url, data, axiosConfig).then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         resolve(response.data);
       } else {
         resolve({ status: false, message: "Server Not Responding" })
@@ -177,37 +126,18 @@ export function Postdatanew(url, data) {
   });
 }
 
-/*axiosinstance.post(url, data, axiosConfig).then(response => {
-  if (response.status == 200) {
-    resolve(response.data);
-  } else {
-    resolve({ status: false, message: "Server Not Responding" })
-  }
-}).catch(error => {
-  console.error(error);
-  reject(error);
-});*/
-
-
-
-
 
 export function Postfile(url, data) {
   console.log("calling file upload");
   return new Promise((resolve, reject) => {
-    /* CheckConnectivity().then(resultcon => {
-       if (resultcon.status) {*/
+
     axios({
       method: 'post',
       url: url,
-      timeout: 25000,
-      /*headers: {
-        //Accept: 'application/json',
-        'Content-Type': 'multipart/form-data',
-      },*/
+      timeout: 50000,
       data: data,
     }).then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         resolve(response.data);
       } else {
         resolve({ status: false, message: "Server Not Responding" })
@@ -217,13 +147,7 @@ export function Postfile(url, data) {
         console.error(error);
         reject(error);
       });
-    /* } else {
-       resolve({ status: false, message: "Please Connect to the internet and Try again" })
-     }
-   }).catch(error => {
-     console.error(error);
-     reject(error);
-   });*/
+
     setTimeout(() => {
       console.log("entered settimeout");
       resolve({ Status: false, Message: 'Network Request TimedOut' });
@@ -233,8 +157,6 @@ export function Postfile(url, data) {
 
 export function PostdataToken(url, data, token) {
   return new Promise((resolve, reject) => {
-    /*CheckConnectivity().then(resultcon => {
-      if (resultcon.status) {*/
     axios({
       method: 'post',
       url: url,
@@ -242,11 +164,10 @@ export function PostdataToken(url, data, token) {
       headers: {
         Accept: 'application/json',
         'Content-Type': 'application/json',
-        // 'Authorization': 'bearer ' + token,
       },
       data: data,
     }).then(response => {
-      if (response.status == 200) {
+      if (response.status === 200) {
         resolve(response.data);
       } else {
         resolve({ status: false, message: "Server Not Responding" })
@@ -256,13 +177,6 @@ export function PostdataToken(url, data, token) {
         console.error(error);
         reject(error);
       });
-    /* } else {
-       resolve({ status: false, message: "Please Connect to the internet and Try again" });
-     }
-   }).catch(error => {
-     console.error(error);
-     reject(error);
-   });*/
     setTimeout(() => {
       console.log("entered settimeout");
       resolve({ Status: false, Message: 'Network Request TimedOut' });

@@ -9,13 +9,15 @@ import Loader from "../../App/layout/Loader";
 import avatar1 from '../../assets/images/user/avatar-1.jpg';
 import avatar2 from '../../assets/images/user/avatar-2.jpg';
 import avatar3 from '../../assets/images/user/avatar-3.jpg';
-import { fetch, adddata, deletedata } from "../../network/Apicall";
+import { fetch, adddata, deletedata, Constants } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
+import Pagination from 'react-responsive-pagination';
 
 class Pattern extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            Total_rows: 1,
             pageno: 0,
             loading: false,
             data: [],
@@ -24,24 +26,38 @@ class Pattern extends React.Component {
             edit: false,
             patternid: '',
             patterntitle: '',
+            patterndescription: '',
             color: 'darkred',
             filter: '',
             searchdata: '',
             searchbox: true,
             patterndetails: {},
-            validation_err: {}
+            validation_err: {},
+            checkbox_question: false,
+            checkbox_option: false,
+            checkbox_hint: false,
+            order_answer: false,
+            option_matching: false,
+            video_required: false,
+            site_reference_required: false
         }
     }
 
     async componentDidMount() {
         let params = {
-            action: "fetchdata"
+            action: "fetchdata",
+            pageno: this.state.pageno
         }
         this.setState({ loading: true });
         let result = await fetch(params, 'pattern');
         this.setState({ loading: false });
         if (result.status) {
-            this.setState({ data: result.data });
+            if (result.Total_rows && !(result.Total_rows == null)) {
+                this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+            } else {
+                this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+            }
+            //this.setState({ data: result.data, pageno: result.page_no });
         } else {
             this.setState({ validation_msg: result.message, color: 'darkred' })
         }
@@ -55,6 +71,7 @@ class Pattern extends React.Component {
                 filter: '',
                 patterntitle: '',
                 patternid: 0,
+                pageno: this.state.pageno
             }
             switch (this.state.filter) {
                 case 'id': params.patternid = this.state.searchdata;
@@ -73,11 +90,17 @@ class Pattern extends React.Component {
                 let result = await fetch(params, 'pattern')
                 //this.setState({ loading: false });
                 if (result.status) {
-                    this.setState({ data: result.data, validation_msg: '' });
+                    console.log("page no = " + this.state.pageno);
+                    if (result.Total_rows && !(result.Total_rows == null)) {
+                        this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+                    } else {
+                        this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+                    }
+                    //this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
                 } else {
                     this.setState({ validation_msg: result.message, color: 'darkred' })
                 }
-                /* } else {
+                /*} else {
                      console.log("ëlse enterd")
                      this.setState({ validation_msg: 'Search Box Cannot be Empty', color: 'darkred' })
                  }*/
@@ -95,7 +118,15 @@ class Pattern extends React.Component {
             let params = {
                 action: this.state.edit ? "updatedata" : "adddata",
                 title: this.state.patterntitle,
-                patternid: this.state.patternid
+                patterndescription: this.state.patterndescription,
+                question_fileupload: this.state.checkbox_question,
+                option_fileupload: this.state.checkbox_option,
+                hint_fileupload: this.state.checkbox_hint,
+                Answer_orders: this.state.order_answer,
+                patternid: this.state.patternid,
+                option_matching: this.state.option_matching,
+                video_required: this.state.video_required,
+                site_reference_required: this.state.site_reference_required
             }
             let validation_result = await validatedata(params, 'pattern');
             if (validation_result.status) {
@@ -129,7 +160,16 @@ class Pattern extends React.Component {
     editdata = async (patterndata) => {
         try {
             console.log("Pattern details ", (patterndata));
-            this.setState({ showdata: false, edit: true, patternid: patterndata.pattern_Id, patterntitle: patterndata.pattern_Title, patterndetails: patterndata });
+            this.setState({
+                showdata: false,
+                edit: true,
+                patternid: patterndata.pattern_Id,
+                patterntitle: patterndata.pattern_Title,
+                patterndetails: patterndata,
+                checkbox_question: patterndata.Question_Fileupload == 1 ? true : false,
+                checkbox_option: patterndata.Option_Fileupload == 1 ? true : false,
+                checkbox_hint: patterndata.Hint_Fileupload == 1 ? true : false
+            });
             console.log("Pattern State ", (this.state));
         } catch (err) {
             console.log(err);
@@ -192,6 +232,7 @@ class Pattern extends React.Component {
             return (<Loader />)
         } else {
             if (this.state.showdata) {
+                let i = 1;
                 return (
                     <Aux>
                         <Row>
@@ -209,7 +250,7 @@ class Pattern extends React.Component {
                                                     aria-label="Recipient's username"
                                                     aria-describedby="basic-addon2"
                                                     name='search'
-                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1500) }}
+                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1000) }}
                                                 />
                                                 <Dropdown as={InputGroup.Append}>
                                                     <Dropdown.Toggle split variant="secondary" id="dropdown-split-basic-2" />
@@ -229,6 +270,7 @@ class Pattern extends React.Component {
                                                 <tr>
                                                     <th>Pattern No</th>
                                                     <th>Pattern Title</th>
+                                                    <th>Description</th>
                                                     <th>last Modified_Time</th>
                                                     <th>Update/Delete</th>
                                                 </tr>
@@ -238,12 +280,12 @@ class Pattern extends React.Component {
                                                     this.state.data.map(item =>
                                                         <tr>
                                                             <th scope="row">
-                                                                {item.pattern_Id}
-                                                                <img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />
+                                                                {i++}
                                                             </th>
                                                             <td>{item.Title}</td>
+                                                            <td>{item.pattern_Description}</td>
                                                             <td>
-                                                                <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_time}</h6>
+                                                                <h6 className="text-muted">{item.modified_time}</h6>
                                                             </td>
                                                             <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.editdata(item) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
                                                         </tr>
@@ -253,11 +295,16 @@ class Pattern extends React.Component {
                                         </Table>
                                     </Card.Body>
                                     <Card.Footer>
-                                        <div style={{ float: "right" }}>
-                                            {this.state.pageno >= 1 ? <Button variant="primary" onClick={this.loaddata}>{'<-'}</Button> : null}
-                                            <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button>
-                                            <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
-                                        </div>
+                                        {/* <div style={{ float: "right" }}>
+                                            {this.state.pageno > 0 ? <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno-- }); this.loaddata() }}><i className="feather icon-arrow-left text-c-white f-20 m-r-4" /></Button> : null}
+                                            {this.state.data.length < 4 ? null : <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}><i className="feather icon-arrow-right text-c-white f-20 m-r-4" /></Button>}
+
+                                                    </div>*/}
+                                        <Pagination
+                                            current={this.state.pageno + 1}
+                                            total={Math.ceil(this.state.Total_rows / Constants.pagelimit)}
+                                            onPageChange={async (selected_page) => { console.log("Selected page no = ", selected_page - 1); await this.setState({ pageno: selected_page - 1 }); this.loaddata() }}
+                                        />
                                     </Card.Footer>
                                 </Card>
 
@@ -283,18 +330,56 @@ class Pattern extends React.Component {
                                         <Row>
                                             <Col md={6}>
                                                 <Form>
-                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                    <Form.Group controlId="formBasicEmail">
                                                         <Form.Label>Pattern Title</Form.Label>
-                                                        <Form.Control as="textarea" rows="3" value={this.state.patterntitle} onChange={(e) => { this.setState({ patterntitle: e.target.value }) }} />
+                                                        <Form.Control type="text" placeholder="Enter pattern" value={this.state.patterntitle} onChange={(e) => { this.setState({ patterntitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
-                                                            Enter pattern Description in brief.
-                                                </Form.Text>
+                                                            Enter Pattern Title.
+                                                    </Form.Text>
                                                         {this.state.validation_err.patterntitle ? <p style={{ color: "darkred" }}>{this.state.validation_err.patterntitle[0]}</p> : null}
 
                                                     </Form.Group>
+                                                    <Form.Group controlId="exampleForm.ControlTextarea1">
+                                                        <Form.Label>Pattern Discription</Form.Label>
+                                                        <Form.Control as="textarea" rows="3" placeholder="Enter pattern Description " value={this.state.patterndescription} onChange={(e) => { this.setState({ patterndescription: e.target.value }) }} />
+                                                        <Form.Text className="text-muted">
+                                                            Enter pattern Description in brief.
+                                                </Form.Text>
+                                                        {this.state.validation_err.patterndescription ? <p style={{ color: "darkred" }}>{this.state.validation_err.patterndescription[0]}</p> : null}
+                                                    </Form.Group>
+                                                    <div className="form-group text-left">
+                                                        <div className="checkbox checkbox-fill d-inline">
+                                                            <input type="checkbox" name="checkbox-question" id="checkbox-question" checked={this.state.checkbox_question} onChange={(e) => { this.setState({ checkbox_question: e.target.checked }) }} />
+                                                            <label htmlFor="checkbox-question" className="cr">Enable File uploade for Question </label>
+                                                        </div>
+                                                        <div className="checkbox checkbox-fill d-inline">
+                                                            <input type="checkbox" name="checkbox-option" id="checkbox-option" checked={this.state.checkbox_option} onChange={(e) => { this.setState({ checkbox_option: e.target.checked }) }} />
+                                                            <label htmlFor="checkbox-option" className="cr">Enable File uploade for Option </label>
+                                                        </div>
+                                                        <div className="checkbox checkbox-fill d-inline">
+                                                            <input type="checkbox" name="checkbox-hint" id="checkbox-hint" checked={this.state.checkbox_hint} onChange={(e) => { this.setState({ checkbox_hint: e.target.checked }) }} />
+                                                            <label htmlFor="checkbox-hint" className="cr">Enable File uploade for Hint </label>
+                                                        </div>
+                                                        <div className="checkbox checkbox-fill d-inline">
+                                                            <input type="checkbox" name="checkbox-answerorder" id="checkbox-answerorder" checked={this.state.order_answer} onChange={(e) => { this.setState({ order_answer: e.target.checked }) }} />
+                                                            <label htmlFor="checkbox-answerorder" className="cr">Arrange/Order Options for Answer   </label>
+                                                        </div>
+                                                        <div className="checkbox checkbox-fill d-inline">
+                                                            <input type="checkbox" name="checkbox-optionmatching" id="checkbox-optionmatching" checked={this.state.option_matching} onChange={(e) => { this.setState({ option_matching: e.target.checked }) }} />
+                                                            <label htmlFor="checkbox-optionmatching" className="cr">Matching option with event for answer   </label>
+                                                        </div>
+                                                        <div className="checkbox checkbox-fill d-inline">
+                                                            <input type="checkbox" name="checkbox-firstvideo" id="checkbox-firstvideo" checked={this.state.video_required} onChange={(e) => { this.setState({ video_required: e.target.checked }) }} />
+                                                            <label htmlFor="checkbox-firstvideo" className="cr">Required video to be played at begining of the question.   </label>
+                                                        </div>
+                                                        <div className="checkbox checkbox-fill d-inline">
+                                                            <input type="checkbox" name="checkbox-sitereference" id="checkbox-sitereference" checked={this.state.site_reference_required} onChange={(e) => { this.setState({ site_reference_required: e.target.checked }) }} />
+                                                            <label htmlFor="checkbox-sitereference" className="cr">Required video to be played at begining of the question.   </label>
+                                                        </div>
+                                                    </div>
                                                     <Button variant="primary" onClick={this.submit}>
                                                         Submit
-                                                </Button>
+                                                    </Button>
                                                 </Form>
                                             </Col>
                                         </Row>

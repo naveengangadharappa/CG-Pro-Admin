@@ -9,13 +9,15 @@ import Loader from "../../App/layout/Loader";
 import avatar1 from '../../assets/images/user/avatar-1.jpg';
 import avatar2 from '../../assets/images/user/avatar-2.jpg';
 import avatar3 from '../../assets/images/user/avatar-3.jpg';
-import { fetch, adddata, deletedata } from "../../network/Apicall";
+import { fetch, adddata, deletedata, Constants } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
+import Pagination from 'react-responsive-pagination';
 
 class Sublevels extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            Total_rows: 1,
             pageno: 0,
             loading: false,
             data: [],
@@ -38,13 +40,19 @@ class Sublevels extends React.Component {
 
     async componentDidMount() {
         let params = {
-            action: "fetchdata"
+            action: "fetchdata",
+            pageno: this.state.pageno
         }
         this.setState({ loading: true });
         let result = await fetch(params, 'sublevel')
         this.setState({ loading: false });
         if (result.status) {
-            this.setState({ data: result.data });
+            if (result.Total_rows && !(result.Total_rows == null)) {
+                this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+            } else {
+                this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+            }
+            //this.setState({ data: result.data, pageno: result.page_no });
         } else {
             this.setState({ validation_msg: result.message })
         }
@@ -60,6 +68,7 @@ class Sublevels extends React.Component {
                 sublevelid: 0,
                 subleveltitle: '',
                 leveltitle: 0,
+                pageno: this.state.pageno
             }
             switch (this.state.filter) {
                 case 'id': params.sublevelid = this.state.searchdata;
@@ -80,7 +89,13 @@ class Sublevels extends React.Component {
             let result = await fetch(params, 'sublevel')
             // this.setState({ loading: false });
             if (result.status) {
-                this.setState({ data: result.data, validation_msg: '' });
+                console.log("page no = " + this.state.pageno);
+                if (result.Total_rows && !(result.Total_rows == null)) {
+                    this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+                } else {
+                    this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+                }
+                // this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
             } else {
                 this.setState({ validation_msg: result.message, color: 'darkred' })
             }
@@ -213,6 +228,7 @@ class Sublevels extends React.Component {
             return (<Loader />)
         } else {
             if (this.state.showdata) {
+                let i = 1;
                 return (
                     <Aux>
                         <Row>
@@ -230,7 +246,7 @@ class Sublevels extends React.Component {
                                                     aria-label="Recipient's username"
                                                     aria-describedby="basic-addon2"
                                                     name='search'
-                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1500) }}
+                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1000) }}
                                                 /> : null
                                                 }
                                                 <Dropdown as={InputGroup.Append}>
@@ -264,8 +280,7 @@ class Sublevels extends React.Component {
                                                     this.state.data.map(item =>
                                                         <tr>
                                                             <th scope="row">
-                                                                {item.Id}
-                                                                <img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />
+                                                                {i++}
                                                             </th>
                                                             <td>{item.title}</td>
                                                             <td>
@@ -285,10 +300,16 @@ class Sublevels extends React.Component {
                                         </Table>
                                     </Card.Body>
                                     <Card.Footer>
-                                        <div style={{ float: "right" }}>
-                                            {this.state.pageno >= 1 ? <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button> : null}
-                                            <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
-                                        </div>
+                                        {/* <div style={{ float: "right" }}>
+                                            {this.state.pageno > 0 ? <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno-- }); this.loaddata() }}><i className="feather icon-arrow-left text-c-white f-20 m-r-4" /></Button> : null}
+                                            {this.state.data.length < 4 ? null : <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}><i className="feather icon-arrow-right text-c-white f-20 m-r-4" /></Button>}
+
+                                                    </div>*/}
+                                        <Pagination
+                                            current={this.state.pageno + 1}
+                                            total={Math.ceil(this.state.Total_rows / Constants.pagelimit)}
+                                            onPageChange={async (selected_page) => { console.log("Selected page no = ", selected_page - 1); await this.setState({ pageno: selected_page - 1 }); this.loaddata() }}
+                                        />
                                     </Card.Footer>
                                 </Card>
 
@@ -303,13 +324,13 @@ class Sublevels extends React.Component {
                             <Col>
                                 <Card>
                                     <Card.Header>
-                                        <Card.Title as="h5">Question Details</Card.Title>
+                                        <Card.Title as="h5">SubLevel Details</Card.Title>
                                         {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List SubLevel</a></div>
 
                                     </Card.Header>
                                     <Card.Body>
-                                        <h5>Enter New Question Details</h5>
+                                        <h5>Enter New SubLevel Details</h5>
                                         <hr />
                                         <Row>
                                             <Col md={6}>

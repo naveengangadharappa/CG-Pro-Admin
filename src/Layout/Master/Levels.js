@@ -1,21 +1,20 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { Row, Col, Card, Table } from 'react-bootstrap';
-import { Form, Button, InputGroup, FormControl, DropdownButton, Dropdown } from 'react-bootstrap';
+import { Form, Button, InputGroup, FormControl, Dropdown } from 'react-bootstrap';
 
 import Aux from "../../hoc/_Aux";
 import DEMO from "../../store/constant";
 import Loader from "../../App/layout/Loader";
 
-import avatar1 from '../../assets/images/user/avatar-1.jpg';
-import avatar2 from '../../assets/images/user/avatar-2.jpg';
-import avatar3 from '../../assets/images/user/avatar-3.jpg';
-import { fetch, adddata, deletedata } from "../../network/Apicall";
+import { fetch, adddata, deletedata, Constants } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
+import Pagination from 'react-responsive-pagination';
 
 class Levels extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            Total_rows: 1,
             pageno: 0,
             data: [],
             validation_msg: '',
@@ -36,13 +35,19 @@ class Levels extends React.Component {
 
     async componentDidMount() {
         let params = {
-            action: "fetchdata"
+            action: "fetchdata",
+            pageno: this.state.pageno
         }
         this.setState({ loading: true });
         let result = await fetch(params, 'level')
         this.setState({ loading: false });
         if (result.status) {
-            this.setState({ data: result.data });
+            if (result.Total_rows && !(result.Total_rows == null)) {
+                this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+            } else {
+                this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+            }
+            //this.setState({ data: result.data, pageno: result.page_no });
         } else {
             this.setState({ validation_msg: result.message, color: 'darkred' })
         }
@@ -56,6 +61,7 @@ class Levels extends React.Component {
                 filter: this.state.filter,
                 levelid: 0,
                 leveltitle: '',
+                pageno: this.state.pageno
             }
             switch (this.state.filter) {
                 case 'id': params.levelid = this.state.searchdata;
@@ -74,7 +80,13 @@ class Levels extends React.Component {
                 let result = await fetch(params, 'level')
                 // this.setState({ loading: false });
                 if (result.status) {
-                    this.setState({ data: result.data, validation_msg: '' });
+                    console.log("page no = " + this.state.pageno);
+                    if (result.Total_rows && !(result.Total_rows == null)) {
+                        this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+                    } else {
+                        this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+                    }
+                    //this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
                 } else {
                     this.setState({ validation_msg: result.message, color: 'darkred' })
                 }
@@ -185,6 +197,8 @@ class Levels extends React.Component {
                     this.setState({ validation_msg: levelresult.message })
                 }
                 break;
+            default: console.log("Filter option acnnot be idwntified");
+                break;
         }
     }
 
@@ -194,6 +208,7 @@ class Levels extends React.Component {
             return (<Loader />)
         } else {
             if (this.state.showdata) {
+                let i = 1;
                 return (
                     <Aux>
                         <Row>
@@ -204,14 +219,14 @@ class Levels extends React.Component {
                                         <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
                                         </p></center>
                                         <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={this.addquestion} >Add Level</a></div>
-                                        <div style={{ float: "right", paddingRight: 5, flexDirection: 'row', paddingRight: 10, paddingBottom: 5 }}>
+                                        <div style={{ float: "right", flexDirection: 'row', paddingRight: 10, paddingBottom: 5 }}>
                                             <InputGroup  >
                                                 <FormControl
                                                     placeholder="Search...."
                                                     aria-label="Recipient's username"
                                                     aria-describedby="basic-addon2"
                                                     name='search'
-                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1500) }}
+                                                    onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1000) }}
                                                 />
                                                 <Dropdown as={InputGroup.Append}>
                                                     <Dropdown.Toggle split variant="secondary" id="dropdown-split-basic-2" />
@@ -241,15 +256,14 @@ class Levels extends React.Component {
                                                     this.state.data.map(item =>
                                                         <tr>
                                                             <th scope="row">
-                                                                {item.Level_Id}
-                                                                <img className="rounded-circle" style={{ width: '40px' }} src={avatar1} alt="activity-user" />
+                                                                {i++}
                                                             </th>
                                                             <td>{item.Level_Title}</td>
                                                             <td>
                                                                 <h6 className="mb-1">{item.Level_summary}</h6>
                                                             </td>
                                                             <td>
-                                                                <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_time}</h6>
+                                                                <h6 className="text-muted">{item.modified_time}</h6>
                                                             </td>
                                                             <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.editdata(item) }}>Edit</a><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.deletedata(item) }}>Delete</a></td>
                                                         </tr>
@@ -259,11 +273,15 @@ class Levels extends React.Component {
                                         </Table>
                                     </Card.Body>
                                     <Card.Footer>
-                                        <div style={{ float: "right" }}>
-                                            {this.state.pageno >= 1 ? <Button variant="primary" onClick={this.loaddata}>{'<-'}</Button> : null}
-                                            <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button>
-                                            <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
-                                        </div>
+                                        {/* <div style={{ float: "right" }}>
+                                            {this.state.pageno > 0 ? <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno-- }); this.loaddata() }}><i className="feather icon-arrow-left text-c-white f-20 m-r-4" /></Button> : null}
+                                            {this.state.data.length < 4 ? null : <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}><i className="feather icon-arrow-right text-c-white f-20 m-r-4" /></Button>}
+                                                    </div>*/}
+                                        <Pagination
+                                            current={this.state.pageno + 1}
+                                            total={Math.ceil(this.state.Total_rows / Constants.pagelimit)}
+                                            onPageChange={async (selected_page) => { console.log("Selected page no = ", selected_page - 1); await this.setState({ pageno: selected_page - 1 }); this.loaddata() }}
+                                        />
                                     </Card.Footer>
                                 </Card>
 
@@ -291,11 +309,11 @@ class Levels extends React.Component {
                                                 <Form>
                                                     <Form.Group controlId="formBasicEmail">
                                                         <Form.Label>Level Title</Form.Label>
-                                                        <Form.Control type="email" placeholder="Enter email" value={this.state.leveltitle} onChange={(e) => { this.setState({ leveltitle: e.target.value }) }} />
+                                                        <Form.Control type="text" placeholder="Enter Level" value={this.state.leveltitle} onChange={(e) => { this.setState({ leveltitle: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Level Title.
                                                     </Form.Text>
-                                                        {this.state.validation_err.leveltitle ? <p style={{ color: "darkred" }}>{this.state.validation_err.leveltitle[0]}</p> : null}
+                                                        {this.state.validation_err.title ? <p style={{ color: "darkred" }}>{this.state.validation_err.title[0]}</p> : null}
 
                                                     </Form.Group>
                                                     <Form.Group controlId="exampleForm.ControlTextarea1">
@@ -304,7 +322,7 @@ class Levels extends React.Component {
                                                         <Form.Text className="text-muted">
                                                             Enter Level Description in brief.
                                             </Form.Text>
-                                                        {this.state.validation_err.levelsummary ? <p style={{ color: "darkred" }}>{this.state.validation_err.levelsummary[0]}</p> : null}
+                                                        {this.state.validation_err.discription ? <p style={{ color: "darkred" }}>{this.state.validation_err.discription[0]}</p> : null}
 
                                                     </Form.Group>
                                                     <Button variant="primary" onClick={this.submit}>

@@ -6,17 +6,19 @@ import { Form, Button, InputGroup, FormControl, DropdownButton, Dropdown } from 
 import Aux from "../../hoc/_Aux";
 import DEMO from "../../store/constant";
 
-import avatar1 from '../../assets/images/user/avatar-1.jpg';
-import avatar2 from '../../assets/images/user/avatar-2.jpg';
-import avatar3 from '../../assets/images/user/avatar-3.jpg';
+// import avatar1 from '../../assets/images/user/avatar-1.jpg';
+// import avatar2 from '../../assets/images/user/avatar-2.jpg';
+// import avatar3 from '../../assets/images/user/avatar-3.jpg';
 import { fetch, Constants, adddata, deletedata } from "../../network/Apicall";
 import { validatedata } from '../../Validation/Validation';
+import Pagination from 'react-responsive-pagination';
 
 class Employee extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             pageno: 0,
+            Total_rows: 1,
             showdetailview: false,
             loading: false,
             password: '',
@@ -44,18 +46,24 @@ class Employee extends React.Component {
         try {
             Constants.currentscreen = 'employee';
             let params = {
-                action: "fetchdata"
+                action: "fetchdata",
+                pageno: this.state.pageno
             }
             this.setState({ loading: true });
-            let result = await fetch(params, 'employee')
+            let result = await fetch(params, 'employee');
             this.setState({ loading: false });
             if (result.status) {
-                this.setState({ data: result.data });
+                if (result.Total_rows && !(result.Total_rows == null)) {
+                    this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+                } else {
+                    this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+                }
+                // this.setState({ data: result.data, pageno: result.page_no });
             } else {
-                this.setState({ validation_msg: result.message })
+                this.setState({ validation_msg: result.message });
             }
         } catch (err) {
-            console.log(err)
+            console.log(err);
         }
     }
 
@@ -83,6 +91,9 @@ class Employee extends React.Component {
                     params.employeedesignation = this.state.searchdata;
                     params.filter = 'designation';
                     break;
+                case 'logout':
+                    params.filter = 'logout';
+                    break;
                 default: params.filter = '';
             }
             // if (String(this.state.searchdata).length > 0) {
@@ -92,7 +103,12 @@ class Employee extends React.Component {
                 let result = await fetch(params, 'employee')
                 //this.setState({ loading: false });
                 if (result.status) {
-                    this.setState({ data: result.data, validation_msg: '' });
+                    console.log("page no = " + this.state.pageno);
+                    if (result.Total_rows && !(result.Total_rows == null)) {
+                        this.setState({ data: result.data, validation_msg: '', Total_rows: result.Total_rows, pageno: result.page_no });
+                    } else {
+                        this.setState({ data: result.data, validation_msg: '', pageno: result.page_no });
+                    }
                 } else {
                     this.setState({ validation_msg: result.message, color: 'darkred' })
                 }
@@ -134,9 +150,9 @@ class Employee extends React.Component {
                     empid: this.state.employeeid,
                     levelid: data.Level_Id
                 }
-                this.setState({ loading: true });
+                //this.setState({ loading: true });
                 let result_sub = await fetch(params, 'employee')
-                this.setState({ loading: false });
+                //this.setState({ loading: false });
                 if (result_sub.status) {
                     this.setState({ sublevel_data: result_sub.data, tab: 'sublevel', validation_msg: '' });
                 } else {
@@ -150,9 +166,9 @@ class Employee extends React.Component {
                     empid: this.state.employeeid,
                     sublevelid: data.SubLevel_Id
                 }
-                this.setState({ loading: true });
+                //this.setState({ loading: true });
                 let result_question = await fetch(params, 'employee')
-                this.setState({ loading: false });
+                //this.setState({ loading: false });
                 if (result_question.status) {
                     this.setState({ question_data: result_question.data, tab: 'question', validation_msg: '' });
                 } else {
@@ -253,6 +269,9 @@ class Employee extends React.Component {
                 break;
             case 'designation': this.setState({ filter: 'designation', searchbox: true });
                 break;
+            case 'logout': await this.setState({ filter: 'logout', searchbox: true });
+                this.loaddata();
+                break;
         }
     }
 
@@ -264,6 +283,7 @@ class Employee extends React.Component {
             if (this.state.showdata) {
                 let i = 1;
                 if (this.state.showdetailview) {
+                    let i = 1;
                     const Questions = (
                         <Card className='Recent-Users'>
                             <Card.Header>
@@ -283,13 +303,13 @@ class Employee extends React.Component {
                                         {this.state.question_data.length > 0 ?
                                             this.state.question_data.map(item =>
                                                 <tr className="unread">
-                                                    <td>{item.Question_Id}</td>
+                                                    <td>{i++}</td>
                                                     <td>
                                                         <h6 className="mb-1">{item.Question_Title}</h6>
                                                         <p className="m-0">Lorem Ipsum is simply dummy text of…</p>
                                                     </td>
                                                     <td>
-                                                        <h6 className="text-muted"><i className="fa fa-circle text-c-green f-10 m-r-15" />{item.Completed_Time}</h6>
+                                                        <h6 className="text-muted">{item.Completed_Time}</h6>
                                                     </td>
                                                     <td>{item.score}</td>
                                                 </tr>
@@ -321,14 +341,14 @@ class Employee extends React.Component {
                                         {this.state.sublevel_data.length > 0 ?
                                             this.state.sublevel_data.map(item =>
                                                 <tr className="unread">
-                                                    <td>{item.SubLevel_Id}</td>
+                                                    <td>{i++}</td>
                                                     <td>
                                                         <h6 className="mb-1">{item.SubLevel_Title}</h6>
                                                         <p className="m-0">{item.SubLevel_Description}</p>
                                                     </td>
                                                     <td>{item.Completed_Time}</td>
                                                     <td>
-                                                        <h6 className="text-muted"><i className="fa fa-circle text-c-green f-10 m-r-15" />{item.Time_Taken_inTime}</h6>
+                                                        <h6 className="text-muted">{item.Time_Taken_inTime}</h6>
                                                     </td>
                                                     <td>{item.sublevel_scores}</td>
                                                     <td><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.Load_Employee_data('question', item) }}>View Questions</a></td>
@@ -361,14 +381,14 @@ class Employee extends React.Component {
                                         {this.state.employee_data.Level && this.state.employee_data.Level.length > 0 ?
                                             this.state.employee_data.Level.map(item =>
                                                 <tr className="unread">
-                                                    <td>{item.Level_Id}</td>
+                                                    <td>{i++}</td>
                                                     <td>
                                                         <h6 className="mb-1">{item.Level_Title}</h6>
                                                         <p className="m-0">{item.Level_Description}</p>
                                                     </td>
                                                     <td>{item.Completed_Time}</td>
                                                     <td>
-                                                        <h6 className="text-muted"><i className="fa fa-circle text-c-green f-10 m-r-15" />{item.Time_Taken_inTime}</h6>
+                                                        <h6 className="text-muted">{item.Time_Taken_inTime}</h6>
                                                     </td>
                                                     <td>{item.Level_Scores}</td>
                                                     <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.Load_Employee_data('sublevel', item) }}>View Sublevels</a></td>
@@ -382,6 +402,15 @@ class Employee extends React.Component {
 
                     return (
                         <Aux>
+                            <Row style={{ marginTop: 1, marginLeft: 1 }}>
+                                <Col md={0.7} l={1}>
+
+                                    <a href={DEMO.BLANK_LINK} className="label theme-bg1 text-white f-30" onClick={() => { this.setState({ showdetailview: false }) }}>
+                                        <div style={{ flex: 1, borderRadius: 100, background: 'white', justifyContent: 'center', alignContent: 'center' }}><i className="feather icon-arrow-left text-c-blue f-30 m-r-5" style={{ alignSelf: 'center', padding: 5, marginLeft: 5 }} /></div>
+                                    </a>
+
+                                </Col>
+                            </Row>
                             <Row>
                                 <Col md={6} xl={4}>
                                     <Card>
@@ -495,7 +524,7 @@ class Employee extends React.Component {
                                                     <h5 className="text-muted mt-3 mb-0">Employee Avathar</h5>
                                                 </div>
                                                 <div className="col-auto">
-                                                    <a href={`http://115.124.127.245:3002/Mission_Onboarding/get_file?fname=${this.state.employee_data.Emp_Avathar_id}`}><img style={{ width: '100%', height: '100%' }} src='http://115.124.127.245:3002/Mission_Onboarding/get_file?fname=303c263c22dca7fb484d3c30936591e0.png' alt="Profile not found" /></a>
+                                                    <a href={`http://115.124.127.245:3002/Mission_Onboarding/get_file?fname=${this.state.employee_data.Emp_Avathar_id}`} target="_blank"><img style={{ width: '100%', height: '100%' }} src={`http://115.124.127.245:3002/Mission_Onboarding/get_file?fname=${this.state.employee_data.Emp_Avathar_id}`} alt="Profile not found" /></a>
                                                 </div>
                                             </div>
                                             <h6 className="text-muted mt-3 mb-0">{this.state.employee_data.Emp_Nme}</h6>
@@ -503,108 +532,51 @@ class Employee extends React.Component {
                                         </Card.Body>
                                     </Card>
                                 </Col>
-                                {/*<Col md={6} xl={4}>
-                                    <Card>
-                                        <Card.Header>
-                                            <Card.Title as='h5'>Rating</Card.Title>
-                                        </Card.Header>
-                                        <Card.Body>
-                                            <div className="row align-items-center justify-content-center m-b-20">
-                                                <div className="col-6">
-                                                    <h2 className="f-w-300 d-flex align-items-center float-left m-0">4.7 <i className="fa fa-star f-10 m-l-10 text-c-yellow" /></h2>
-                                                </div>
-                                                <div className="col-6">
-                                                    <h6 className="d-flex  align-items-center float-right m-0">0.4 <i className="fa fa-caret-up text-c-green f-22 m-l-10" /></h6>
-                                                </div>
-                                            </div>
 
-                                            <div className="row">
-                                                <div className="col-xl-12">
-                                                    <h6 className="align-items-center float-left"><i className="fa fa-star f-10 m-r-10 text-c-yellow" />5</h6>
-                                                    <h6 className="align-items-center float-right">384</h6>
-                                                    <div className="progress m-t-30 m-b-20" style={{ height: '6px' }}>
-                                                        <div className="progress-bar progress-c-theme" role="progressbar" style={{ width: '70%' }} aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" />
-                                                    </div>
-                                                </div>
-
-                                                <div className="col-xl-12">
-                                                    <h6 className="align-items-center float-left"><i className="fa fa-star f-10 m-r-10 text-c-yellow" />4</h6>
-                                                    <h6 className="align-items-center float-right">145</h6>
-                                                    <div className="progress m-t-30  m-b-20" style={{ height: '6px' }}>
-                                                        <div className="progress-bar progress-c-theme" role="progressbar" style={{ width: '35%' }} aria-valuenow="35" aria-valuemin="0" aria-valuemax="100" />
-                                                    </div>
-                                                </div>
-
-                                                <div className="col-xl-12">
-                                                    <h6 className="align-items-center float-left"><i className="fa fa-star f-10 m-r-10 text-c-yellow" />3</h6>
-                                                    <h6 className="align-items-center float-right">24</h6>
-                                                    <div className="progress m-t-30  m-b-20" style={{ height: '6px' }}>
-                                                        <div className="progress-bar progress-c-theme" role="progressbar" style={{ width: '25%' }} aria-valuenow="25" aria-valuemin="0" aria-valuemax="100" />
-                                                    </div>
-                                                </div>
-
-                                                <div className="col-xl-12">
-                                                    <h6 className="align-items-center float-left"><i className="fa fa-star f-10 m-r-10 text-c-yellow" />2</h6>
-                                                    <h6 className="align-items-center float-right">1</h6>
-                                                    <div className="progress m-t-30  m-b-20" style={{ height: '6px' }}>
-                                                        <div className="progress-bar progress-c-theme" role="progressbar" style={{ width: '10%' }} aria-valuenow="10" aria-valuemin="0" aria-valuemax="100" />
-                                                    </div>
-                                                </div>
-                                                <div className="col-xl-12">
-                                                    <h6 className="align-items-center float-left"><i className="fa fa-star f-10 m-r-10 text-c-yellow" />1</h6>
-                                                    <h6 className="align-items-center float-right">0</h6>
-                                                    <div className="progress m-t-30  m-b-5" style={{ height: '6px' }}>
-                                                        <div className="progress-bar" role="progressbar" style={{ width: '0%' }} aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </Card.Body>
-                                    </Card>
-                    </Col>*/}
                                 <Col md={6} xl={12} className='m-b-30'>
-                                    <Tabs defaultActiveKey={this.state.tab} id="uncontrolled-tab-example" >
-                                        <Tab eventKey="level" title="Level">
-                                            {Level}
-                                        </Tab>
-                                        <Tab eventKey="subLevel" title="SubLevel">
-                                            {SubLevel}
-                                        </Tab>
-                                        <Tab eventKey="question" title="Question">
-                                            {Questions}
-                                        </Tab>
-                                    </Tabs>
+                                    {this.state.tab == "level" ?
+                                        <Tabs defaultActiveKey="level" id="uncontrolled-tab-example" >
+                                            <Tab eventKey="level" title="Level">
+                                                {Level}
+                                            </Tab>
+                                            <Tab eventKey="sublevel" title="SubLevel">
+                                                {SubLevel}
+                                            </Tab>
+                                            <Tab eventKey="question" title="Question">
+                                                {Questions}
+                                            </Tab>
+                                        </Tabs> : null}
+                                    {this.state.tab == "sublevel" ?
+                                        <Tabs defaultActiveKey="sublevel" id="uncontrolled-tab-example" >
+                                            <Tab eventKey="level" title="Level">
+                                                {Level}
+                                            </Tab>
+                                            <Tab eventKey="sublevel" title="SubLevel">
+                                                {SubLevel}
+                                            </Tab>
+                                            <Tab eventKey="question" title="Question">
+                                                {Questions}
+                                            </Tab>
+                                        </Tabs> : null}
+                                    {this.state.tab == "question" ?
+                                        <Tabs defaultActiveKey="question" id="uncontrolled-tab-example" >
+                                            <Tab eventKey="level" title="Level">
+                                                {Level}
+                                            </Tab>
+                                            <Tab eventKey="sublevel" title="SubLevel">
+                                                {SubLevel}
+                                            </Tab>
+                                            <Tab eventKey="question" title="Question">
+                                                {Questions}
+                                            </Tab>
+                                        </Tabs> : null}
                                 </Col>
                             </Row>
                         </Aux>
                     );
-                    /* return (
-                         <Aux>
-                             <Row>
-                                 <Col>
-                                     <Card className='Recent-Users'>
-                                         <Card.Header>
-                                             <Card.Title as='h5'>Employees Details</Card.Title>
-                                             <center><p>{String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
-                                             </p></center>
-                                             <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdetailview: false }) }} >Employee List</a></div>
-                                         </Card.Header>
-                                         <Card.Body>
- 
-                                         </Card.Body>
-                                         <Card.Footer>
-                                             <div style={{ float: "right" }}>
-                                                 {this.state.pageno >= 1 ? <Button variant="primary" onClick={this.loaddata}>{'<-'}</Button> : null}
-                                                 <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button>
-                                                 <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
-                                             </div>
-                                         </Card.Footer>
-                                     </Card>
- 
-                                 </Col>
-                             </Row>
-                         </Aux>
-                     );*/
+
                 } else {
+                    let i = 1;
                     return (
                         <Aux>
                             <Row>
@@ -622,16 +594,17 @@ class Employee extends React.Component {
                                                         aria-label="Recipient's employeename"
                                                         aria-describedby="basic-addon2"
                                                         name='search'
-                                                        onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1500) }}
+                                                        onChange={(e) => { this.setState({ searchdata: e.target.value }); setTimeout(() => { this.state.filter ? this.loaddata() : this.setState({ validation_msg: "Please Select Filter" }) }, 1000) }}
                                                     /> : null
                                                     }
                                                     <Dropdown as={InputGroup.Append}>
                                                         <Dropdown.Toggle split variant="secondary" id="dropdown-split-basic-2" />
-                                                        <Button variant="secondary" onClick={this.loaddata}>Search</Button>
+                                                        {/*<Button variant="secondary" onClick={this.loaddata}>Search</Button>*/}
                                                         <Dropdown.Menu>
                                                             <Dropdown.Item hred="#/action-1" onClick={() => { this.displayfilter('id') }}>Search by Id</Dropdown.Item>
                                                             <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('name') }}>Search by Name</Dropdown.Item>
                                                             <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('designation') }}>Search by Designation</Dropdown.Item>
+                                                            <Dropdown.Item hred="#/action-2" onClick={() => { this.displayfilter('logout') }}>Filter Logout Employee</Dropdown.Item>
                                                         </Dropdown.Menu>
                                                     </Dropdown>
 
@@ -658,7 +631,7 @@ class Employee extends React.Component {
                                                             <tr>
                                                                 <th scope="row">
                                                                     {i++}
-                                                                    <img className="rounded-circle" style={{ width: '40px' }} src={avatar2} alt="activity-user" />
+                                                                    {/*<img className="rounded-circle" style={{ width: '40px' }} src={avatar2} alt="activity-user" />*/}
                                                                 </th>
                                                                 <td>{item.Emp_Id}</td>
                                                                 <td>
@@ -671,7 +644,7 @@ class Employee extends React.Component {
                                                                     <h6 className="mb-1">{item.Emp_designation}</h6>
                                                                 </td>
                                                                 <td>
-                                                                    <h6 className="text-muted"><i className="fa fa-circle text-c-red f-10 m-r-15" />{item.modified_time}</h6>
+                                                                    <h6 className="text-muted">{(item.login_status) ? <p><i className="fa fa-circle text-c-green f-10 m-r-15" /><b>Login at</b> {item.modified_time}</p> : <p><i className="fa fa-circle text-c-red f-10 m-r-15" /><b>Logout at</b> {item.modified_time}</p>}</h6>
                                                                 </td>
                                                                 <td><a href={DEMO.BLANK_LINK} className="label theme-bg2 text-white f-12" onClick={() => { this.setState({ employeeid: item.Emp_Id, employeename: item.Emp_name, email: item.Emp_email, employeedesignation: item.Emp_designation, showdata: false, edit: true }) }}>Edit</a>
                                                                     <a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.Load_Employee_data("employee", item) }}>View Details</a>
@@ -682,11 +655,15 @@ class Employee extends React.Component {
                                             </Table>
                                         </Card.Body>
                                         <Card.Footer>
-                                            <div style={{ float: "right" }}>
-                                                {this.state.pageno >= 1 ? <Button variant="primary" onClick={this.loaddata}>{'<-'}</Button> : null}
-                                                <Button variant="secondary" onClick={this.loaddata}>{'<-'}</Button>
-                                                <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}>{'->'}</Button>
-                                            </div>
+                                            {/*<div style={{ float: "right" }}>
+                                                {this.state.pageno >= 1 ? <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno-- }); this.loaddata() }}><i className="feather icon-arrow-left text-c-white f-20 m-r-4" /></Button> : null}
+                                                {this.state.data.length < 4 ? null : <Button variant="secondary" onClick={() => { this.setState({ pageno: this.state.pageno++ }); this.loaddata() }}><i className="feather icon-arrow-right text-c-white f-20 m-r-4" /></Button>} 
+                                            </div>*/}
+                                            <Pagination
+                                                current={this.state.pageno + 1}
+                                                total={Math.ceil(this.state.Total_rows / Constants.pagelimit)}
+                                                onPageChange={async (selected_page) => { console.log("Selected page no = ", selected_page - 1); await this.setState({ pageno: selected_page - 1 }); this.loaddata() }}
+                                            />
                                         </Card.Footer>
                                     </Card>
 
@@ -704,7 +681,7 @@ class Employee extends React.Component {
                                     <Card.Header>
                                         <Card.Title as="h5">Employee Details</Card.Title>
                                         {String(this.state.validation_msg).length > 0 ? <h5 style={{ color: this.state.color }}>{this.state.validation_msg}</h5> : null}
-                                        <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List Master Users</a></div>
+                                        <div style={{ borderRadius: 25, float: "right" }}><a href={DEMO.BLANK_LINK} className="label theme-bg text-white f-12" onClick={() => { this.setState({ showdata: true }) }} >List Employee Users</a></div>
 
                                     </Card.Header>
                                     <Card.Body>
@@ -715,7 +692,7 @@ class Employee extends React.Component {
                                                 <Form>
                                                     <Form.Group controlId="EmployeeID">
                                                         <Form.Label>Employee ID</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter Employee Id" value={this.state.employeeid} onChange={(e) => { this.setState({ employeeid: e.target.value }) }} />
+                                                        <Form.Control type="text" placeholder="Enter Employee Id" value={this.state.employeeid} onChange={(e) => { if (!this.state.edit) this.setState({ employeeid: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter Employee  Id.
                                                 </Form.Text>
@@ -724,7 +701,7 @@ class Employee extends React.Component {
                                                     </Form.Group>
                                                     <Form.Group controlId="EmployeeName">
                                                         <Form.Label>Employee Name</Form.Label>
-                                                        <Form.Control type="text" placeholder="Enter Employee Name" value={this.state.employeename} onChange={(e) => { this.setState({ employeename: e.target.value }) }} />
+                                                        <Form.Control type="text" placeholder="Enter Employee Name" value={this.state.employeename} onChange={(e) => { if (!this.state.edit) this.setState({ employeename: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
                                                             Enter User Name.
                                                 </Form.Text>
@@ -753,7 +730,7 @@ class Employee extends React.Component {
                                                         <Form.Label>User Password</Form.Label>
                                                         <Form.Control type="password" placeholder="" value={this.state.password} onChange={(e) => { this.setState({ password: e.target.value }) }} />
                                                         <Form.Text className="text-muted">
-                                                            Enter Temperory password for this Master User.
+                                                            Enter Temperory password for this Employee User.
                                                     </Form.Text>
                                                         {this.state.validation_err.password ? <p style={{ color: "darkred" }}>{this.state.validation_err.password[0]}</p> : null}
                                                     </Form.Group>

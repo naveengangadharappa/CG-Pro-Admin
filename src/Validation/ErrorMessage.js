@@ -42,7 +42,8 @@ const option = {
     "required.patternid": 'Pattern Id Required'
 };
 const pattern = {
-    "required.patterntitle": 'Pattern Title Required'
+    "required.title": 'Pattern Title Required',
+    "required.patterndescription": 'Pattern Description Required'
 };
 const hint = {
     "required.hinttitle": 'Hint Title Required',

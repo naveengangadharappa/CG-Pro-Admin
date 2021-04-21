@@ -11,9 +11,6 @@ import { Constants } from '../../network/Apicall';
 
 
 class Dashboard extends React.Component {
-    constructor(props) {
-        super(props)
-    }
 
     render() {
         if (Constants.user_profile.login_status) {

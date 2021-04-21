@@ -72,11 +72,9 @@ class SignUp1 extends React.Component {
                     if (result.status) {
                         //this.props.history.push({ pathname: '/dashboard' })
                         let storageresult = await Offlinestorage({ choice: 'adddata', key: 'userprofile', value: { login_status: true, userid: result.data.Id, username: result.data.name, email: result.data.email } });
-                        console.log("offline result =", (storageresult));
                         if (storageresult.status) {
                             this.props.update_userdetails({ userid: result.data.Id, username: result.data.name, email: result.data.email, login_status: true });
                             this.props.update_loginstatus();
-                            console.log("navigtion to user")
                             this.props.history.push({ pathname: '/Users' })
                         }
                     } else {
@@ -131,12 +129,12 @@ class SignUp1 extends React.Component {
                                 <div className="input-group mb-4">
                                     <input type="password" className="form-control" placeholder="password" value={this.state.password} onChange={(e) => { this.setState({ password: e.target.value }) }} required />
                                 </div>
-                                <div className="form-group text-left">
+                                {/*<div className="form-group text-left">
                                     <div className="checkbox checkbox-fill d-inline">
                                         <input type="checkbox" name="checkbox-fill-1" id="checkbox-fill-a1" />
                                         <label htmlFor="checkbox-fill-a1" className="cr"> Save credentials</label>
                                     </div>
-                                </div>
+                            </div>*/}
                                 <button className="btn btn-primary shadow-2 mb-4" onClick={() => { if (!this.state.disable) { this.submit() } }}>Login</button>
                                 <p className="mb-2 text-muted">Forgot password? <NavLink to="/auth/reset-password-1">Reset</NavLink></p>
                                 {/*<p className="mb-0 text-muted">Don’t have an account? <NavLink to="/auth/signup-1">Signup</NavLink></p>*/}
